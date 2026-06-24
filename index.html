@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>笔记本 · 思考与反思</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --paper: #FAF7F0;
+    --paper-soft: #F2EDE3;
+    --ink: #2B2826;
+    --ink-soft: #5C564C;
+    --ink-faint: #8A8479;
+    --rule: #E3DDCD;
+    --accent: #C2622D;
+    --accent-soft: #E8D2BE;
+    --accent-deep: #9B4A1E;
+    --good: #5C7A52;
+    --font-display: 'Source Serif Pro', Georgia, 'Songti SC', serif;
+    --font-body: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', 'Courier New', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  /* faint paper texture via repeating lines */
+  .app{
+    display:flex;
+    min-height:100vh;
+    background-image:
+      linear-gradient(var(--paper) 0%, var(--paper) 100%);
+  }
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    width:220px;
+    flex:0 0 220px;
+    border-right:1px solid var(--rule);
+    padding:28px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .brand{
+    font-family:var(--font-display);
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    margin:0 6px 28px 6px;
+    color:var(--ink);
+  }
+  .brand .dot{color:var(--accent);}
+
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    transition:background .15s, color .15s;
+    user-select:none;
+  }
+  .nav-item:hover{ background:var(--paper-soft); color:var(--ink); }
+  .nav-item.active{
+    background:var(--accent-soft);
+    color:var(--accent-deep);
+    font-weight:600;
+  }
+  .nav-item .count{
+    margin-left:auto;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--ink-faint);
+  }
+  .nav-item.active .count{ color:var(--accent-deep); }
+
+  .sidebar-divider{
+    height:1px;
+    background:var(--rule);
+    margin:18px 6px;
+  }
+
+  .sidebar-footer{
+    margin-top:auto;
+    padding:0 6px;
+    font-size:11.5px;
+    color:var(--ink-faint);
+    line-height:1.6;
+  }
+  .sidebar-footer button{
+    background:none;border:none;color:var(--ink-faint);
+    text-decoration:underline;cursor:pointer;font-size:11.5px;padding:0;
+  }
+  .sidebar-footer button:hover{ color:var(--accent-deep); }
+
+  /* ---------- main ---------- */
+  .main{
+    flex:1;
+    min-width:0;
+    padding:36px 48px 60px;
+    max-width:880px;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+  .view-title{
+    font-family:var(--font-display);
+    font-size:28px;
+    margin:0;
+  }
+  .view-sub{
+    color:var(--ink-faint);
+    font-size:13px;
+    margin:4px 0 26px;
+  }
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .search-box{
+    flex:1;
+    min-width:160px;
+    position:relative;
+  }
+  .search-box input{
+    width:100%;
+    padding:9px 12px 9px 32px;
+    border:1px solid var(--rule);
+    border-radius:7px;
+    background:#fff;
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+    font-family:var(--font-body);
+  }
+  .search-box input:focus{ border-color:var(--accent); }
+  .search-box svg{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color:var(--ink-faint);
+  }
+
+  button.btn{
+    border:1px solid var(--rule);
+    background:#fff;
+    color:var(--ink-soft);
+    padding:9px 14px;
+    border-radius:7px;
+    font-size:13.5px;
+    cursor:pointer;
+    font-family:var(--font-body);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:border-color .15s, color .15s, background .15s;
+    white-space:nowrap;
+  }
+  button.btn:hover{ border-color:var(--ink-faint); color:var(--ink); }
+  button.btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    font-weight:600;
+  }
+  button.btn.primary:hover{ background:var(--accent-deep); border-color:var(--accent-deep); }
+  button.btn svg{ width:14px; height:14px; }
+  button.btn:disabled{ opacity:.45; cursor:default; }
+
+  .tag-filter{
+    display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;
+  }
+  .tag-chip{
+    padding:4px 10px;
+    border-radius:20px;
+    background:var(--paper-soft);
+    color:var(--ink-soft);
+    font-size:12px;
+    cursor:pointer;
+    border:1px solid transparent;
+  }
+  .tag-chip.active{
+    background:var(--accent-soft);
+    color:var(--accent-deep);
+    border-color:var(--accent-soft);
+    font-weight:600;
+  }
+
+  /* ---------- cards ---------- */
+  .empty-state{
+    border:1px dashed var(--rule);
+    border-radius:10px;
+    padding:48px 24px;
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:14px;
+  }
+  .empty-state .big{
+    font-family:var(--font-display);
+    font-size:17px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+
+  .card-list{ display:flex; flex-direction:column; gap:12px; }
+
+  .note-card{
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:16px 18px;
+    cursor:pointer;
+    transition:border-color .15s, box-shadow .15s;
+    position:relative;
+  }
+  .note-card:hover{
+    border-color:var(--ink-faint);
+    box-shadow:0 2px 10px rgba(43,40,38,0.05);
+  }
+  .note-card-top{
+    display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+  }
+  .note-card-title{
+    font-family:var(--font-display);
+    font-size:16.5px;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  .note-card-date{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    white-space:nowrap;
+  }
+  .note-card-preview{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    line-height:1.6;
+    margin:8px 0 10px;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  .note-card-tags{ display:flex; gap:6px; flex-wrap:wrap; }
+  .mini-tag{
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    background:var(--paper-soft);
+    color:var(--ink-soft);
+  }
+
+  /* reflection card has a binder-line signature element */
+  .reflect-card{
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:16px 18px 16px 22px;
+    cursor:pointer;
+    position:relative;
+    transition:border-color .15s, box-shadow .15s;
+    border-left:3px solid var(--accent-soft);
+  }
+  .reflect-card:hover{
+    border-color:var(--ink-faint);
+    border-left-color:var(--accent);
+    box-shadow:0 2px 10px rgba(43,40,38,0.05);
+  }
+  .reflect-card-top{ display:flex; justify-content:space-between; align-items:baseline; }
+  .reflect-date{
+    font-family:var(--font-display);
+    font-size:16px;
+    font-weight:600;
+  }
+  .reflect-weekday{
+    font-size:11.5px; color:var(--ink-faint); margin-left:8px; font-weight:400;
+  }
+  .mood-badge{ font-size:18px; }
+  .reflect-preview{
+    color:var(--ink-soft); font-size:13.5px; line-height:1.6; margin-top:8px;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  }
+
+  /* ---------- editor ---------- */
+  .editor{
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:12px;
+    padding:28px 32px;
+  }
+  .editor-header{
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;
+  }
+  .editor-back{
+    color:var(--ink-faint);
+    font-size:13px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:5px;
+    background:none; border:none; padding:0; font-family:var(--font-body);
+  }
+  .editor-back:hover{ color:var(--ink); }
+  .editor-actions{ display:flex; gap:8px; }
+
+  .field-label{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    margin:0 0 6px;
+    font-weight:600;
+  }
+  input.title-input{
+    width:100%;
+    border:none;
+    font-family:var(--font-display);
+    font-size:24px;
+    font-weight:600;
+    color:var(--ink);
+    outline:none;
+    padding:0;
+    margin-bottom:6px;
+    background:transparent;
+  }
+  input.title-input::placeholder{ color:var(--ink-faint); font-weight:400; }
+
+  .meta-row{
+    display:flex; gap:16px; align-items:center; margin-bottom:18px;
+    font-size:12px; color:var(--ink-faint); flex-wrap:wrap;
+  }
+  input.tags-input{
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:12.5px;
+    outline:none;
+    font-family:var(--font-body);
+    min-width:200px;
+  }
+  input.tags-input:focus{ border-color:var(--accent); }
+
+  textarea.content-input{
+    width:100%;
+    min-height:300px;
+    border:none;
+    outline:none;
+    resize:vertical;
+    font-size:15px;
+    line-height:1.85;
+    font-family:var(--font-body);
+    color:var(--ink);
+    padding:0;
+    background:transparent;
+  }
+  textarea.content-input::placeholder{ color:var(--ink-faint); }
+
+  hr.soft{ border:none; border-top:1px solid var(--rule); margin:18px 0; }
+
+  /* reflection prompt blocks */
+  .prompt-block{ margin-bottom:22px; }
+  .prompt-block label{
+    display:block;
+    font-family:var(--font-display);
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--accent-deep);
+    margin-bottom:8px;
+  }
+  .prompt-block textarea{
+    width:100%;
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:14px;
+    line-height:1.7;
+    font-family:var(--font-body);
+    color:var(--ink);
+    outline:none;
+    resize:vertical;
+    min-height:70px;
+    background:var(--paper);
+  }
+  .prompt-block textarea:focus{ border-color:var(--accent); background:#fff; }
+
+  .mood-row{ display:flex; gap:8px; margin-bottom:22px; }
+  .mood-option{
+    width:42px; height:42px;
+    border-radius:50%;
+    border:2px solid var(--rule);
+    background:#fff;
+    font-size:19px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:border-color .15s, transform .1s;
+  }
+  .mood-option:hover{ transform:translateY(-2px); }
+  .mood-option.selected{ border-color:var(--accent); background:var(--accent-soft); }
+
+  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  input.date-input{
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:7px 10px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    outline:none;
+  }
+  input.date-input:focus{ border-color:var(--accent); }
+
+  .toast{
+    position:fixed;
+    bottom:24px; left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--ink);
+    color:var(--paper);
+    padding:10px 20px;
+    border-radius:8px;
+    font-size:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s, transform .2s;
+    z-index:50;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(43,40,38,0.4);
+    display:flex; align-items:center; justify-content:center;
+    z-index:100;
+  }
+  .modal-box{
+    background:#fff; border-radius:12px; padding:24px 26px;
+    width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-box h3{ margin:0 0 8px; font-family:var(--font-display); font-size:17px; }
+  .modal-box p{ margin:0 0 18px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; }
+
+  .loading-overlay{
+    position:fixed; inset:0; background:rgba(250,247,240,0.85);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:var(--ink-soft); z-index:200;
+  }
+  .hidden{ display:none !important; }
+
+  @media (max-width: 720px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; flex:none; border-right:none; border-bottom:1px solid var(--rule); flex-direction:row; align-items:center; padding:16px 14px; overflow-x:auto; }
+    .brand{ margin:0 12px 0 0; }
+    .sidebar-divider{ display:none; }
+    .sidebar-footer{ display:none; }
+    .nav-item{ white-space:nowrap; }
+    .main{ padding:24px 18px 60px; max-width:100%; }
+    .editor{ padding:20px; }
+  }
+
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+
+<div id="app" class="app"></div>
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading-overlay hidden">载入中…</div>
+
+<script type="text/javascript">
+(function(){
+  "use strict";
+
+  /* ============ icons (inline svg strings) ============ */
+  const ICONS = {
+    notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/></svg>',
+    reflect: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+    all: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="11" width="18" height="4" rx="1"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
+    pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 3v5h5" /><path d="M8 16h2.5a1.5 1.5 0 000-3H8v5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0l1 13h6l1-13"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
+  };
+
+  /* ============ state ============ */
+  let state = {
+    view: "notes",          // notes | reflect | all
+    notes: [],               // {id, title, content, tags:[], created, updated}
+    reflections: [],         // {id, date, mood, highlight, challenge, grateful, tomorrow, created}
+    editing: null,           // {type:'note'|'reflect', id: string|null}
+    search: "",
+    activeTag: null,
+    loaded: false
+  };
+
+  const STORAGE_KEY_NOTES = "notebook:notes";
+  const STORAGE_KEY_REFLECTIONS = "notebook:reflections";
+
+  const MOODS = ["😊","🙂","😐","😔","😣","🤩","😴"];
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+  function fmtDate(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'});
+  }
+  function fmtDateTime(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}) + " " + d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  }
+  function weekdayOf(dateStr){
+    const days = ["周日","周一","周二","周三","周四","周五","周六"];
+    return days[new Date(dateStr+"T00:00:00").getDay()];
+  }
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ============ storage ============ */
+  async function loadAll(){
+    showLoading(true);
+    try{
+      try{
+        const r = await window.storage.get(STORAGE_KEY_NOTES, false);
+        state.notes = r && r.value ? JSON.parse(r.value) : [];
+      }catch(e){ state.notes = []; }
+      try{
+        const r2 = await window.storage.get(STORAGE_KEY_REFLECTIONS, false);
+        state.reflections = r2 && r2.value ? JSON.parse(r2.value) : [];
+      }catch(e){ state.reflections = []; }
+    }finally{
+      state.loaded = true;
+      showLoading(false);
+      render();
+    }
+  }
+
+  async function saveNotes(){
+    try{ await window.storage.set(STORAGE_KEY_NOTES, JSON.stringify(state.notes), false); }
+    catch(e){ showToast("保存失败，请重试"); }
+  }
+  async function saveReflections(){
+    try{ await window.storage.set(STORAGE_KEY_REFLECTIONS, JSON.stringify(state.reflections), false); }
+    catch(e){ showToast("保存失败，请重试"); }
+  }
+
+  /* ============ toast ============ */
+  let toastTimer = null;
+  function showToast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> t.classList.remove("show"), 2200);
+  }
+  function showLoading(on){
+    document.getElementById("loading").classList.toggle("hidden", !on);
+  }
+
+  /* ============ render root ============ */
+  function render(){
+    const app = document.getElementById("app");
+    app.innerHTML = sidebarHtml() + mainHtml();
+    bindEvents();
+  }
+
+  function sidebarHtml(){
+    const noteCount = state.notes.length;
+    const reflectCount = state.reflections.length;
+    const allCount = noteCount + reflectCount;
+    function item(key, icon, label, count){
+      const active = state.view === key && !state.editing;
+      return `<div class="nav-item ${active?'active':''}" data-nav="${key}">
+        <span style="width:15px;height:15px;display:inline-flex">${icon}</span>
+        <span>${label}</span>
+        <span class="count">${count}</span>
+      </div>`;
+    }
+    return `
+    <div class="sidebar">
+      <div class="brand">笔记本<span class="dot">·</span></div>
+      ${item('notes', ICONS.notes, '笔记', noteCount)}
+      ${item('reflect', ICONS.reflect, '每日反思', reflectCount)}
+      <div class="sidebar-divider"></div>
+      ${item('all', ICONS.all, '全部归档', allCount)}
+      <div class="sidebar-footer">
+        数据保存在本设备账户下。<br/>
+        <button id="exportAllBtn" type="button">导出全部为 PDF</button>
+      </div>
+    </div>`;
+  }
+
+  function mainHtml(){
+    if(state.editing) return editorHtml();
+    if(state.view === "notes") return notesListHtml();
+    if(state.view === "reflect") return reflectListHtml();
+    return allListHtml();
+  }
+
+  /* ============ NOTES LIST ============ */
+  function allTags(){
+    const s = new Set();
+    state.notes.forEach(n => (n.tags||[]).forEach(t => s.add(t)));
+    return Array.from(s);
+  }
+
+  function filteredNotes(){
+    let list = state.notes.slice().sort((a,b)=> b.updated.localeCompare(a.updated));
+    if(state.activeTag) list = list.filter(n => (n.tags||[]).includes(state.activeTag));
+    if(state.search.trim()){
+      const q = state.search.trim().toLowerCase();
+      list = list.filter(n => (n.title+n.content).toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  function notesListHtml(){
+    const list = filteredNotes();
+    const tags = allTags();
+    return `
+    <div class="main">
+      <div class="topbar">
+        <h1 class="view-title">笔记</h1>
+      </div>
+      <p class="view-sub">记录想法、灵感与待办——随时可以整理成 PDF。</p>
+      <div class="toolbar">
+        <div class="search-box">
+          ${ICONS.search}
+          <input id="searchInput" type="text" placeholder="搜索笔记…" value="${escapeHtml(state.search)}"/>
+        </div>
+        <button class="btn primary" id="newNoteBtn" type="button">${ICONS.plus} 新建笔记</button>
+      </div>
+      ${tags.length ? `<div class="tag-filter">
+        <span class="tag-chip ${!state.activeTag?'active':''}" data-tag="">全部</span>
+        ${tags.map(t=>`<span class="tag-chip ${state.activeTag===t?'active':''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join("")}
+      </div>` : ""}
+      ${list.length ? `<div class="card-list">${list.map(noteCardHtml).join("")}</div>` : emptyNotesHtml()}
+    </div>`;
+  }
+
+  function emptyNotesHtml(){
+    return `<div class="empty-state">
+      <div class="big">还没有笔记</div>
+      点一下「新建笔记」，写下第一条想法。
+    </div>`;
+  }
+
+  function noteCardHtml(n){
+    const tags = (n.tags||[]).map(t=>`<span class="mini-tag">${escapeHtml(t)}</span>`).join("");
+    return `<div class="note-card" data-open-note="${n.id}">
+      <div class="note-card-top">
+        <h3 class="note-card-title">${escapeHtml(n.title || "无标题笔记")}</h3>
+        <span class="note-card-date">${fmtDateTime(n.updated)}</span>
+      </div>
+      <div class="note-card-preview">${escapeHtml(n.content || "（空）")}</div>
+      <div class="note-card-tags">${tags}</div>
+    </div>`;
+  }
+
+  /* ============ REFLECTIONS LIST ============ */
+  function filteredReflections(){
+    let list = state.reflections.slice().sort((a,b)=> b.date.localeCompare(a.date));
+    if(state.search.trim()){
+      const q = state.search.trim().toLowerCase();
+      list = list.filter(r => [r.highlight,r.challenge,r.grateful,r.tomorrow].join(" ").toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  function reflectListHtml(){
+    const list = filteredReflections();
+    return `
+    <div class="main">
+      <div class="topbar">
+        <h1 class="view-title">每日反思</h1>
+      </div>
+      <p class="view-sub">每天花几分钟，回顾今天，沉淀想法。</p>
+      <div class="toolbar">
+        <div class="search-box">
+          ${ICONS.search}
+          <input id="searchInput" type="text" placeholder="搜索反思…" value="${escapeHtml(state.search)}"/>
+        </div>
+        <button class="btn primary" id="newReflectBtn" type="button">${ICONS.plus} 写今天的反思</button>
+      </div>
+      ${list.length ? `<div class="card-list">${list.map(reflectCardHtml).join("")}</div>` : emptyReflectHtml()}
+    </div>`;
+  }
+
+  function emptyReflectHtml(){
+    return `<div class="empty-state">
+      <div class="big">还没有反思记录</div>
+      点一下「写今天的反思」，开始第一篇。
+    </div>`;
+  }
+
+  function reflectCardHtml(r){
+    const preview = [r.highlight, r.challenge].filter(Boolean).join(" · ") || "（还未填写内容）";
+    return `<div class="reflect-card" data-open-reflect="${r.id}">
+      <div class="reflect-card-top">
+        <div>
+          <span class="reflect-date">${fmtDate(r.date)}</span>
+          <span class="reflect-weekday">${weekdayOf(r.date)}</span>
+        </div>
+        <span class="mood-badge">${r.mood || "📝"}</span>
+      </div>
+      <div class="reflect-preview">${escapeHtml(preview)}</div>
+    </div>`;
+  }
+
+  /* ============ ALL ARCHIVE ============ */
+  function allListHtml(){
+    const items = [
+      ...state.notes.map(n=>({type:'note', sortKey:n.updated, data:n})),
+      ...state.reflections.map(r=>({type:'reflect', sortKey:r.date, data:r}))
+    ].sort((a,b)=> b.sortKey.localeCompare(a.sortKey));
+
+    let list = items;
+    if(state.search.trim()){
+      const q = state.search.trim().toLowerCase();
+      list = list.filter(it=>{
+        if(it.type==='note') return (it.data.title+it.data.content).toLowerCase().includes(q);
+        return [it.data.highlight,it.data.challenge,it.data.grateful,it.data.tomorrow].join(" ").toLowerCase().includes(q);
+      });
+    }
+
+    return `
+    <div class="main">
+      <div class="topbar">
+        <h1 class="view-title">全部归档</h1>
+      </div>
+      <p class="view-sub">笔记与反思的合集，可以一次性导出成 PDF。</p>
+      <div class="toolbar">
+        <div class="search-box">
+          ${ICONS.search}
+          <input id="searchInput" type="text" placeholder="搜索全部内容…" value="${escapeHtml(state.search)}"/>
+        </div>
+      </div>
+      ${list.length ? `<div class="card-list">${list.map(it=> it.type==='note' ? noteCardHtml(it.data) : reflectCardHtml(it.data)).join("")}</div>` : `<div class="empty-state"><div class="big">还没有任何内容</div>去写一条笔记或一篇反思吧。</div>`}
+    </div>`;
+  }
+
+  /* ============ EDITOR ============ */
+  function editorHtml(){
+    if(state.editing.type === "note") return noteEditorHtml();
+    return reflectEditorHtml();
+  }
+
+  function getNote(id){ return state.notes.find(n=>n.id===id); }
+  function getReflection(id){ return state.reflections.find(r=>r.id===id); }
+
+  function noteEditorHtml(){
+    const isNew = !state.editing.id;
+    const n = isNew ? {id:null,title:"",content:"",tags:[]} : getNote(state.editing.id);
+    return `
+    <div class="main">
+      <div class="editor">
+        <div class="editor-header">
+          <button class="editor-back" id="backBtn" type="button">${ICONS.back} 返回笔记</button>
+          <div class="editor-actions">
+            ${!isNew ? `<button class="btn" id="pdfNoteBtn" type="button">${ICONS.pdf} 导出 PDF</button>
+            <button class="btn" id="deleteNoteBtn" type="button">${ICONS.trash} 删除</button>` : ""}
+            <button class="btn primary" id="saveNoteBtn" type="button">保存</button>
+          </div>
+        </div>
+        <input class="title-input" id="noteTitleInput" type="text" placeholder="标题…" value="${escapeHtml(n.title)}"/>
+        <div class="meta-row">
+          <span>标签</span>
+          <input class="tags-input" id="noteTagsInput" type="text" placeholder="用逗号分隔，例如：工作, 灵感" value="${escapeHtml((n.tags||[]).join(', '))}"/>
+        </div>
+        <hr class="soft"/>
+        <textarea class="content-input" id="noteContentInput" placeholder="开始写下你的想法…">${escapeHtml(n.content)}</textarea>
+      </div>
+    </div>`;
+  }
+
+  function reflectEditorHtml(){
+    const isNew = !state.editing.id;
+    const r = isNew ? {id:null,date:todayStr(),mood:"",highlight:"",challenge:"",grateful:"",tomorrow:""} : getReflection(state.editing.id);
+    return `
+    <div class="main">
+      <div class="editor">
+        <div class="editor-header">
+          <button class="editor-back" id="backBtn" type="button">${ICONS.back} 返回反思</button>
+          <div class="editor-actions">
+            ${!isNew ? `<button class="btn" id="pdfReflectBtn" type="button">${ICONS.pdf} 导出 PDF</button>
+            <button class="btn" id="deleteReflectBtn" type="button">${ICONS.trash} 删除</button>` : ""}
+            <button class="btn primary" id="saveReflectBtn" type="button">保存</button>
+          </div>
+        </div>
+
+        <div class="date-picker-row">
+          <span class="field-label" style="margin:0">日期</span>
+          <input class="date-input" id="reflectDateInput" type="date" value="${r.date}"/>
+          <span style="color:var(--ink-faint);font-size:12.5px">${weekdayOf(r.date)}</span>
+        </div>
+
+        <p class="field-label">今天的心情</p>
+        <div class="mood-row" id="moodRow">
+          ${MOODS.map(m=>`<div class="mood-option ${r.mood===m?'selected':''}" data-mood="${m}">${m}</div>`).join("")}
+        </div>
+
+        <div class="prompt-block">
+          <label>今天最值得记下的事</label>
+          <textarea id="reflectHighlight" placeholder="发生了什么让你印象深刻、开心或者有成就感的事？">${escapeHtml(r.highlight)}</textarea>
+        </div>
+        <div class="prompt-block">
+          <label>遇到的困难或挑战</label>
+          <textarea id="reflectChallenge" placeholder="哪里不太顺利？是什么原因？">${escapeHtml(r.challenge)}</textarea>
+        </div>
+        <div class="prompt-block">
+          <label>心怀感激的事</label>
+          <textarea id="reflectGrateful" placeholder="今天有什么值得感恩、值得珍惜的小事？">${escapeHtml(r.grateful)}</textarea>
+        </div>
+        <div class="prompt-block">
+          <label>给明天的自己一句话</label>
+          <textarea id="reflectTomorrow" placeholder="想对明天说点什么？想改进、想尝试、想提醒自己的事。">${escapeHtml(r.tomorrow)}</textarea>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ============ events ============ */
+  function bindEvents(){
+    document.querySelectorAll("[data-nav]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        state.view = el.getAttribute("data-nav");
+        state.editing = null;
+        state.search = "";
+        state.activeTag = null;
+        render();
+      });
+    });
+
+    const exportAllBtn = document.getElementById("exportAllBtn");
+    if(exportAllBtn) exportAllBtn.addEventListener("click", exportAllToPdf);
+
+    const searchInput = document.getElementById("searchInput");
+    if(searchInput){
+      searchInput.addEventListener("input", e=>{ state.search = e.target.value; render(); restoreFocus("searchInput"); });
+    }
+
+    document.querySelectorAll("[data-tag]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const t = el.getAttribute("data-tag");
+        state.activeTag = t || null;
+        render();
+      });
+    });
+
+    const newNoteBtn = document.getElementById("newNoteBtn");
+    if(newNoteBtn) newNoteBtn.addEventListener("click", ()=>{ state.editing = {type:'note', id:null}; render(); });
+
+    const newReflectBtn = document.getElementById("newReflectBtn");
+    if(newReflectBtn) newReflectBtn.addEventListener("click", ()=>{
+      const existing = state.reflections.find(r=>r.date===todayStr());
+      state.editing = {type:'reflect', id: existing ? existing.id : null};
+      render();
+    });
+
+    document.querySelectorAll("[data-open-note]").forEach(el=>{
+      el.addEventListener("click", ()=>{ state.editing = {type:'note', id: el.getAttribute("data-open-note")}; render(); });
+    });
+    document.querySelectorAll("[data-open-reflect]").forEach(el=>{
+      el.addEventListener("click", ()=>{ state.editing = {type:'reflect', id: el.getAttribute("data-open-reflect")}; render(); });
+    });
+
+    const backBtn = document.getElementById("backBtn");
+    if(backBtn) backBtn.addEventListener("click", ()=>{ state.editing = null; render(); });
+
+    const saveNoteBtn = document.getElementById("saveNoteBtn");
+    if(saveNoteBtn) saveNoteBtn.addEventListener("click", saveNoteFromEditor);
+
+    const deleteNoteBtn = document.getElementById("deleteNoteBtn");
+    if(deleteNoteBtn) deleteNoteBtn.addEventListener("click", ()=> confirmDelete('note', state.editing.id));
+
+    const pdfNoteBtn = document.getElementById("pdfNoteBtn");
+    if(pdfNoteBtn) pdfNoteBtn.addEventListener("click", ()=> exportNotePdf(getNote(state.editing.id)));
+
+    const saveReflectBtn = document.getElementById("saveReflectBtn");
+    if(saveReflectBtn) saveReflectBtn.addEventListener("click", saveReflectFromEditor);
+
+    const deleteReflectBtn = document.getElementById("deleteReflectBtn");
+    if(deleteReflectBtn) deleteReflectBtn.addEventListener("click", ()=> confirmDelete('reflect', state.editing.id));
+
+    const pdfReflectBtn = document.getElementById("pdfReflectBtn");
+    if(pdfReflectBtn) pdfReflectBtn.addEventListener("click", ()=> exportReflectionPdf(getReflection(state.editing.id)));
+
+    const moodRow = document.getElementById("moodRow");
+    if(moodRow){
+      moodRow.querySelectorAll(".mood-option").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          moodRow.querySelectorAll(".mood-option").forEach(o=>o.classList.remove("selected"));
+          el.classList.add("selected");
+          moodRow.dataset.selected = el.getAttribute("data-mood");
+        });
+      });
+    }
+
+    const reflectDateInput = document.getElementById("reflectDateInput");
+    if(reflectDateInput){
+      reflectDateInput.addEventListener("change", ()=>{
+        // live update weekday label without full rerender losing focus
+        const label = reflectDateInput.nextElementSibling;
+        if(label) label.textContent = weekdayOf(reflectDateInput.value);
+      });
+    }
+  }
+
+  function restoreFocus(id){
+    const el = document.getElementById(id);
+    if(el){ el.focus(); const v = el.value; el.value=""; el.value=v; }
+  }
+
+  /* ============ save / delete handlers ============ */
+  async function saveNoteFromEditor(){
+    const title = document.getElementById("noteTitleInput").value.trim();
+    const content = document.getElementById("noteContentInput").value;
+    const tagsRaw = document.getElementById("noteTagsInput").value;
+    const tags = tagsRaw.split(",").map(t=>t.trim()).filter(Boolean);
+    const now = new Date().toISOString();
+
+    if(!title && !content.trim()){
+      showToast("笔记内容为空，未保存");
+      return;
+    }
+
+    if(state.editing.id){
+      const n = getNote(state.editing.id);
+      n.title = title; n.content = content; n.tags = tags; n.updated = now;
+    } else {
+      state.notes.push({id: uid(), title, content, tags, created: now, updated: now});
+    }
+    await saveNotes();
+    state.editing = null;
+    state.view = "notes";
+    render();
+    showToast("已保存");
+  }
+
+  async function saveReflectFromEditor(){
+    const date = document.getElementById("reflectDateInput").value || todayStr();
+    const moodRow = document.getElementById("moodRow");
+    const mood = moodRow ? (moodRow.dataset.selected || (moodRow.querySelector(".mood-option.selected")?.getAttribute("data-mood")) || "") : "";
+    const highlight = document.getElementById("reflectHighlight").value;
+    const challenge = document.getElementById("reflectChallenge").value;
+    const grateful = document.getElementById("reflectGrateful").value;
+    const tomorrow = document.getElementById("reflectTomorrow").value;
+    const now = new Date().toISOString();
+
+    if(state.editing.id){
+      const r = getReflection(state.editing.id);
+      r.date=date; r.mood=mood; r.highlight=highlight; r.challenge=challenge; r.grateful=grateful; r.tomorrow=tomorrow; r.updated=now;
+    } else {
+      // prevent duplicate same-day entries: merge into existing if found
+      const existing = state.reflections.find(r=>r.date===date);
+      if(existing){
+        existing.mood=mood; existing.highlight=highlight; existing.challenge=challenge; existing.grateful=grateful; existing.tomorrow=tomorrow; existing.updated=now;
+      } else {
+        state.reflections.push({id: uid(), date, mood, highlight, challenge, grateful, tomorrow, created: now, updated: now});
+      }
+    }
+    await saveReflections();
+    state.editing = null;
+    state.view = "reflect";
+    render();
+    showToast("已保存");
+  }
+
+  function confirmDelete(type, id){
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `<div class="modal-box">
+      <h3>确认删除？</h3>
+      <p>删除后无法恢复，确定要删除这条${type==='note'?'笔记':'反思记录'}吗？</p>
+      <div class="modal-actions">
+        <button class="btn" id="cancelDel" type="button">取消</button>
+        <button class="btn primary" id="confirmDel" type="button" style="background:#B3402A;border-color:#B3402A">删除</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#cancelDel").addEventListener("click", ()=> overlay.remove());
+    overlay.querySelector("#confirmDel").addEventListener("click", async ()=>{
+      if(type==='note'){
+        state.notes = state.notes.filter(n=>n.id!==id);
+        await saveNotes();
+        state.view = "notes";
+      } else {
+        state.reflections = state.reflections.filter(r=>r.id!==id);
+        await saveReflections();
+        state.view = "reflect";
+      }
+      state.editing = null;
+      overlay.remove();
+      render();
+      showToast("已删除");
+    });
+  }
+
+  /* ============ PDF export ============ */
+  function newPdfDoc(){
+    const { jsPDF } = window.jspdf;
+    return new jsPDF({ unit: "pt", format: "a4" });
+  }
+
+  function pdfHeader(doc, title, subtitle, y){
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(40,38,36);
+    doc.text(title, 56, y);
+    y += 20;
+    if(subtitle){
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(10);
+      doc.setTextColor(140,132,121);
+      doc.text(subtitle, 56, y);
+      y += 18;
+    }
+    doc.setDrawColor(227,221,205);
+    doc.line(56, y, 539, y);
+    y += 22;
+    return y;
+  }
+
+  function writeWrapped(doc, text, x, y, maxWidth, lineHeight, pageBottom){
+    const lines = doc.splitTextToSize(text && text.trim() ? text : "（未填写）", maxWidth);
+    lines.forEach(line=>{
+      if(y > pageBottom){ doc.addPage(); y = 56; }
+      doc.text(line, x, y);
+      y += lineHeight;
+    });
+    return y;
+  }
+
+  function exportNotePdf(n){
+    if(!n) return;
+    try{
+      const doc = newPdfDoc();
+      let y = pdfHeader(doc, n.title || "无标题笔记", `更新于 ${fmtDateTime(n.updated)}${(n.tags&&n.tags.length)?'  ·  标签：'+n.tags.join(', '):''}`, 64);
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(12);
+      doc.setTextColor(43,40,38);
+      writeWrapped(doc, n.content, 56, y, 483, 17, 760);
+      doc.save(`${(n.title||'笔记').slice(0,30)}.pdf`);
+      showToast("PDF 已生成");
+    }catch(e){
+      console.error(e);
+      showToast("导出失败：" + e.message);
+    }
+  }
+
+  function exportReflectionPdf(r){
+    if(!r) return;
+    try{
+      const doc = newPdfDoc();
+      let y = pdfHeader(doc, `${fmtDate(r.date)} ${weekdayOf(r.date)} 的反思`, r.mood ? `心情：${r.mood}` : "", 64);
+      const sections = [
+        ["今天最值得记下的事", r.highlight],
+        ["遇到的困难或挑战", r.challenge],
+        ["心怀感激的事", r.grateful],
+        ["给明天的自己一句话", r.tomorrow]
+      ];
+      doc.setFontSize(12);
+      sections.forEach(([label, text])=>{
+        if(y > 740){ doc.addPage(); y = 56; }
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(155,74,30);
+        doc.text(label, 56, y);
+        y += 18;
+        doc.setFont("helvetica","normal");
+        doc.setTextColor(43,40,38);
+        y = writeWrapped(doc, text, 56, y, 483, 17, 760);
+        y += 12;
+      });
+      doc.save(`反思-${r.date}.pdf`);
+      showToast("PDF 已生成");
+    }catch(e){
+      console.error(e);
+      showToast("导出失败：" + e.message);
+    }
+  }
+
+  function exportAllToPdf(){
+    if(state.notes.length===0 && state.reflections.length===0){
+      showToast("还没有内容可以导出");
+      return;
+    }
+    try{
+      const doc = newPdfDoc();
+      let y = pdfHeader(doc, "我的笔记本", `导出于 ${fmtDateTime(new Date().toISOString())}  ·  共 ${state.notes.length} 条笔记，${state.reflections.length} 篇反思`, 64);
+
+      if(state.notes.length){
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(14);
+        doc.setTextColor(40,38,36);
+        if(y > 740){ doc.addPage(); y = 56; }
+        doc.text("笔记", 56, y);
+        y += 20;
+        const sortedNotes = state.notes.slice().sort((a,b)=> b.updated.localeCompare(a.updated));
+        sortedNotes.forEach(n=>{
+          if(y > 730){ doc.addPage(); y = 56; }
+          doc.setFont("helvetica","bold");
+          doc.setFontSize(12.5);
+          doc.setTextColor(43,40,38);
+          y = writeWrapped(doc, n.title || "无标题笔记", 56, y, 483, 16, 760);
+          doc.setFont("helvetica","normal");
+          doc.setFontSize(10);
+          doc.setTextColor(140,132,121);
+          doc.text(fmtDateTime(n.updated) + ((n.tags&&n.tags.length)? '   标签：'+n.tags.join(', ') : ''), 56, y);
+          y += 14;
+          doc.setFontSize(11.5);
+          doc.setTextColor(43,40,38);
+          y = writeWrapped(doc, n.content, 56, y, 483, 15.5, 760);
+          y += 14;
+          doc.setDrawColor(230,224,212);
+          if(y > 745){ doc.addPage(); y = 56; } else { doc.line(56,y,539,y); y += 16; }
+        });
+      }
+
+      if(state.reflections.length){
+        if(y > 700){ doc.addPage(); y = 56; }
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(14);
+        doc.setTextColor(40,38,36);
+        doc.text("每日反思", 56, y);
+        y += 20;
+        const sortedR = state.reflections.slice().sort((a,b)=> b.date.localeCompare(a.date));
+        sortedR.forEach(r=>{
+          if(y > 700){ doc.addPage(); y = 56; }
+          doc.setFont("helvetica","bold");
+          doc.setFontSize(12.5);
+          doc.setTextColor(155,74,30);
+          doc.text(`${fmtDate(r.date)} ${weekdayOf(r.date)} ${r.mood||""}`, 56, y);
+          y += 16;
+          const sections = [
+            ["今天最值得记下的事", r.highlight],
+            ["遇到的困难或挑战", r.challenge],
+            ["心怀感激的事", r.grateful],
+            ["给明天的自己一句话", r.tomorrow]
+          ];
+          sections.forEach(([label,text])=>{
+            if(!text || !text.trim()) return;
+            if(y > 745){ doc.addPage(); y = 56; }
+            doc.setFont("helvetica","bold");
+            doc.setFontSize(10.5);
+            doc.setTextColor(90,86,76);
+            doc.text(label + "：", 56, y);
+            y += 14;
+            doc.setFont("helvetica","normal");
+            doc.setFontSize(11);
+            doc.setTextColor(43,40,38);
+            y = writeWrapped(doc, text, 56, y, 483, 15, 760);
+            y += 8;
+          });
+          y += 10;
+          if(y > 745){ doc.addPage(); y = 56; } else { doc.setDrawColor(230,224,212); doc.line(56,y,539,y); y += 16; }
+        });
+      }
+
+      doc.save(`我的笔记本-${todayStr()}.pdf`);
+      showToast("PDF 已生成");
+    }catch(e){
+      console.error(e);
+      showToast("导出失败：" + e.message);
+    }
+  }
+
+  /* ============ boot ============ */
+  document.addEventListener("DOMContentLoaded", loadAll);
+  if(document.readyState !== "loading") loadAll();
+
+})();
+</script>
+</body>
+</html>
