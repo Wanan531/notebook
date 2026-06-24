@@ -645,15 +645,75 @@
   }
 
   /* ============ storage ============ */
-  // IMPORTANT: window.storage.set() can fail "silently" by resolving to null
-  // instead of throwing (per the storage API contract). The original code only
-  // caught *thrown* errors, so a null-failure looked identical to success: the
-  // UI showed "已保存" but nothing was actually written, and the entry was lost
-  // on next reload. saveToStorage() now treats a null/falsy result as a real
-  // failure too, and the caller is told whether the save actually succeeded.
+  // PERSISTENCE BACKEND: this build runs as a standalone .html file opened
+  // directly in a browser (not inside a Claude.ai artifact), so the
+  // `window.storage` API that Claude.ai injects is NOT available here.
+  // To keep the exact same async get/set/contract the rest of the app
+  // already relies on, we provide a small localStorage-backed shim that
+  // mimics window.storage's {key, value, shared} resolve shape and its
+  // "resolve to null on failure instead of throwing" behavior. If a real
+  // window.storage is ever present (e.g. this file is pasted into a
+  // Claude.ai artifact), we use that instead and leave this app logic
+  // untouched.
+  const localStorageShim = {
+    async get(key /*, shared */){
+      try{
+        const raw = window.localStorage.getItem(key);
+        if(raw === null) return null;
+        return { key, value: raw, shared: false };
+      }catch(e){
+        console.error("localStorage.getItem failed for key:", key, e);
+        return null;
+      }
+    },
+    async set(key, value /*, shared */){
+      try{
+        window.localStorage.setItem(key, value);
+        return { key, value, shared: false };
+      }catch(e){
+        // e.g. quota exceeded, storage disabled in this browser/profile
+        console.error("localStorage.setItem failed for key:", key, e);
+        return null;
+      }
+    },
+    async delete(key /*, shared */){
+      try{
+        window.localStorage.removeItem(key);
+        return { key, deleted: true, shared: false };
+      }catch(e){
+        console.error("localStorage.removeItem failed for key:", key, e);
+        return null;
+      }
+    },
+    async list(prefix /*, shared */){
+      try{
+        const keys = [];
+        for(let i=0; i<window.localStorage.length; i++){
+          const k = window.localStorage.key(i);
+          if(!prefix || (k && k.indexOf(prefix) === 0)) keys.push(k);
+        }
+        return { keys, prefix, shared: false };
+      }catch(e){
+        console.error("localStorage listing failed", e);
+        return null;
+      }
+    }
+  };
+
+  // Use the real artifact storage API if present (so this same file still
+  // works correctly if pasted into a Claude.ai artifact); otherwise fall
+  // back to the localStorage-backed shim above.
+  const storageBackend = (typeof window.storage !== "undefined" && window.storage)
+    ? window.storage
+    : localStorageShim;
+
+  // IMPORTANT: storageBackend.set() can fail "silently" by resolving to null
+  // instead of throwing (per the storage API contract). saveToStorage()
+  // treats a null/falsy result as a real failure too, and the caller is told
+  // whether the save actually succeeded.
   async function saveToStorage(key, value){
     try{
-      const result = await window.storage.set(key, value, false);
+      const result = await storageBackend.set(key, value, false);
       if(!result){
         console.error("storage.set returned null/falsy for key:", key);
         return false;
@@ -670,11 +730,11 @@
     showLoading(true);
     try{
       try{
-        const r = await window.storage.get(STORAGE_KEY_NOTES, false);
+        const r = await storageBackend.get(STORAGE_KEY_NOTES, false);
         state.notes = r && r.value ? JSON.parse(r.value) : [];
       }catch(e){ state.notes = []; }
       try{
-        const r2 = await window.storage.get(STORAGE_KEY_REFLECTIONS, false);
+        const r2 = await storageBackend.get(STORAGE_KEY_REFLECTIONS, false);
         state.reflections = r2 && r2.value ? JSON.parse(r2.value) : [];
       }catch(e){ state.reflections = []; }
     }finally{
