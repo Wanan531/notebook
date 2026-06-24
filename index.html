@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>笔记本 · 思考与反思</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --paper: #FAF7F0;
@@ -30,18 +31,26 @@
     font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
-    overscroll-behavior-y:none;
   }
 
+  /* faint paper texture via repeating lines */
   .app{
     display:flex;
-    flex-direction:column;
     min-height:100vh;
+    background-image:
+      linear-gradient(var(--paper) 0%, var(--paper) 100%);
   }
 
-  /* ---------- sidebar (desktop only, hidden by default — mobile first) ---------- */
-  .sidebar{ display:none; }
-
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    width:220px;
+    flex:0 0 220px;
+    border-right:1px solid var(--rule);
+    padding:28px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
   .brand{
     font-family:var(--font-display);
     font-size:20px;
@@ -96,75 +105,13 @@
     text-decoration:underline;cursor:pointer;font-size:11.5px;padding:0;
   }
   .sidebar-footer button:hover{ color:var(--accent-deep); }
-
-  /* ---------- mobile top bar ---------- */
-  .mobile-topbar{
-    position:sticky;
-    top:0;
-    z-index:20;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:calc(env(safe-area-inset-top, 0px) + 14px) 18px 12px;
-    background:var(--paper);
-    border-bottom:1px solid var(--rule);
-  }
-  .mobile-topbar .brand{ margin:0; font-size:18px; }
-
-  /* ---------- bottom tab bar (mobile) ---------- */
-  .bottom-nav{
-    position:fixed;
-    left:0; right:0; bottom:0;
-    z-index:30;
-    display:flex;
-    background:var(--paper);
-    border-top:1px solid var(--rule);
-    padding-bottom:env(safe-area-inset-bottom, 0px);
-  }
-  .bottom-nav-item{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:3px;
-    padding:9px 4px 8px;
-    color:var(--ink-faint);
-    cursor:pointer;
-    user-select:none;
-    min-height:56px;
-  }
-  .bottom-nav-item svg{ width:21px; height:21px; }
-  .bottom-nav-item span.label{ font-size:11px; font-weight:500; }
-  .bottom-nav-item.active{ color:var(--accent-deep); }
-
-  /* ---------- floating action button (mobile) ---------- */
-  .fab{
-    position:fixed;
-    right:18px;
-    bottom:calc(72px + env(safe-area-inset-bottom, 0px));
-    z-index:31;
-    width:56px; height:56px;
-    border-radius:50%;
-    background:var(--accent);
-    color:#fff;
-    border:none;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    box-shadow:0 8px 20px rgba(194,98,45,0.4);
-    cursor:pointer;
-  }
-  .fab svg{ width:24px; height:24px; }
-  .fab:active{ background:var(--accent-deep); transform:scale(0.96); }
+  .sidebar-footer button:disabled{ opacity:.5; cursor:default; text-decoration:none; }
 
   /* ---------- main ---------- */
   .main{
     flex:1;
     min-width:0;
-    width:100%;
-    padding:20px 16px calc(96px + env(safe-area-inset-bottom, 0px));
-    margin:0 auto;
+    padding:36px 48px 60px;
     max-width:880px;
   }
 
@@ -176,19 +123,19 @@
   }
   .view-title{
     font-family:var(--font-display);
-    font-size:24px;
+    font-size:28px;
     margin:0;
   }
   .view-sub{
     color:var(--ink-faint);
     font-size:13px;
-    margin:4px 0 18px;
+    margin:4px 0 26px;
   }
 
   .toolbar{
     display:flex;
     gap:10px;
-    margin-bottom:16px;
+    margin-bottom:22px;
     flex-wrap:wrap;
     align-items:center;
   }
@@ -199,28 +146,28 @@
   }
   .search-box input{
     width:100%;
-    padding:11px 12px 11px 36px;
+    padding:9px 12px 9px 32px;
     border:1px solid var(--rule);
-    border-radius:9px;
+    border-radius:7px;
     background:#fff;
-    font-size:16px;
+    font-size:13.5px;
     color:var(--ink);
     outline:none;
     font-family:var(--font-body);
   }
   .search-box input:focus{ border-color:var(--accent); }
   .search-box svg{
-    position:absolute; left:12px; top:50%; transform:translateY(-50%);
-    width:16px; height:16px; color:var(--ink-faint);
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color:var(--ink-faint);
   }
 
   button.btn{
     border:1px solid var(--rule);
     background:#fff;
     color:var(--ink-soft);
-    padding:10px 16px;
-    border-radius:9px;
-    font-size:14px;
+    padding:9px 14px;
+    border-radius:7px;
+    font-size:13.5px;
     cursor:pointer;
     font-family:var(--font-body);
     display:inline-flex;
@@ -228,7 +175,6 @@
     gap:6px;
     transition:border-color .15s, color .15s, background .15s;
     white-space:nowrap;
-    min-height:40px;
   }
   button.btn:hover{ border-color:var(--ink-faint); color:var(--ink); }
   button.btn.primary{
@@ -238,27 +184,20 @@
     font-weight:600;
   }
   button.btn.primary:hover{ background:var(--accent-deep); border-color:var(--accent-deep); }
-  button.btn svg{ width:14px; height:14px; flex:none; }
+  button.btn svg{ width:14px; height:14px; }
   button.btn:disabled{ opacity:.45; cursor:default; }
-  /* the toolbar "new" button is hidden on mobile — the FAB covers that action */
-  .toolbar-new-btn{ display:none; }
 
   .tag-filter{
-    display:flex; gap:6px; flex-wrap:nowrap; margin-bottom:16px;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-bottom:2px;
+    display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;
   }
   .tag-chip{
-    padding:6px 12px;
+    padding:4px 10px;
     border-radius:20px;
     background:var(--paper-soft);
     color:var(--ink-soft);
-    font-size:12.5px;
+    font-size:12px;
     cursor:pointer;
     border:1px solid transparent;
-    white-space:nowrap;
-    flex:none;
   }
   .tag-chip.active{
     background:var(--accent-soft);
@@ -288,8 +227,8 @@
   .note-card{
     background:#fff;
     border:1px solid var(--rule);
-    border-radius:12px;
-    padding:15px 16px;
+    border-radius:10px;
+    padding:16px 18px;
     cursor:pointer;
     transition:border-color .15s, box-shadow .15s;
     position:relative;
@@ -298,7 +237,6 @@
     border-color:var(--ink-faint);
     box-shadow:0 2px 10px rgba(43,40,38,0.05);
   }
-  .note-card:active{ background:var(--paper-soft); }
   .note-card-top{
     display:flex; justify-content:space-between; align-items:baseline; gap:10px;
   }
@@ -317,7 +255,7 @@
   }
   .note-card-preview{
     color:var(--ink-soft);
-    font-size:14px;
+    font-size:13.5px;
     line-height:1.6;
     margin:8px 0 10px;
     overflow:hidden;
@@ -338,8 +276,8 @@
   .reflect-card{
     background:#fff;
     border:1px solid var(--rule);
-    border-radius:12px;
-    padding:15px 16px 15px 19px;
+    border-radius:10px;
+    padding:16px 18px 16px 22px;
     cursor:pointer;
     position:relative;
     transition:border-color .15s, box-shadow .15s;
@@ -350,7 +288,6 @@
     border-left-color:var(--accent);
     box-shadow:0 2px 10px rgba(43,40,38,0.05);
   }
-  .reflect-card:active{ background:var(--paper-soft); }
   .reflect-card-top{ display:flex; justify-content:space-between; align-items:baseline; }
   .reflect-date{
     font-family:var(--font-display);
@@ -366,39 +303,25 @@
     overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
   }
 
-  /* ---------- editor (mobile-first: edge-to-edge, sticky header) ---------- */
+  /* ---------- editor ---------- */
   .editor{
     background:#fff;
-    border:none;
-    border-radius:0;
-    padding:0;
-    margin:-20px -16px 0;
-    min-height:calc(100vh - 0px);
+    border:1px solid var(--rule);
+    border-radius:12px;
+    padding:28px 32px;
   }
   .editor-header{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px;
-    position:sticky; top:0; z-index:15;
-    background:#fff;
-    border-bottom:1px solid var(--rule);
-    gap:8px;
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;
   }
-  .editor-body{ padding:18px 16px calc(40px + env(safe-area-inset-bottom,0px)); }
   .editor-back{
     color:var(--ink-faint);
-    font-size:14px;
+    font-size:13px;
     cursor:pointer;
-    display:flex; align-items:center; gap:4px;
-    background:none; border:none; padding:6px 4px 6px 0; font-family:var(--font-body);
-    flex:none;
+    display:flex; align-items:center; gap:5px;
+    background:none; border:none; padding:0; font-family:var(--font-body);
   }
-  .editor-back svg{ width:18px; height:18px; }
-  .editor-back .back-label{ display:none; }
   .editor-back:hover{ color:var(--ink); }
-  .editor-actions{ display:flex; gap:6px; align-items:center; }
-  .editor-actions button.btn{ padding:9px 12px; }
-  .editor-actions button.btn .btn-label{ display:none; }
-  .editor-actions button.btn.primary .btn-label{ display:inline; }
+  .editor-actions{ display:flex; gap:8px; }
 
   .field-label{
     font-size:11.5px;
@@ -412,7 +335,7 @@
     width:100%;
     border:none;
     font-family:var(--font-display);
-    font-size:22px;
+    font-size:24px;
     font-weight:600;
     color:var(--ink);
     outline:none;
@@ -423,28 +346,27 @@
   input.title-input::placeholder{ color:var(--ink-faint); font-weight:400; }
 
   .meta-row{
-    display:flex; gap:10px; align-items:center; margin-bottom:16px;
+    display:flex; gap:16px; align-items:center; margin-bottom:18px;
     font-size:12px; color:var(--ink-faint); flex-wrap:wrap;
   }
   input.tags-input{
     border:1px solid var(--rule);
-    border-radius:8px;
-    padding:8px 10px;
-    font-size:16px;
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:12.5px;
     outline:none;
     font-family:var(--font-body);
-    flex:1;
-    min-width:160px;
+    min-width:200px;
   }
   input.tags-input:focus{ border-color:var(--accent); }
 
   textarea.content-input{
     width:100%;
-    min-height:260px;
+    min-height:300px;
     border:none;
     outline:none;
     resize:vertical;
-    font-size:16px;
+    font-size:15px;
     line-height:1.85;
     font-family:var(--font-body);
     color:var(--ink);
@@ -453,10 +375,10 @@
   }
   textarea.content-input::placeholder{ color:var(--ink-faint); }
 
-  hr.soft{ border:none; border-top:1px solid var(--rule); margin:16px 0; }
+  hr.soft{ border:none; border-top:1px solid var(--rule); margin:18px 0; }
 
   /* reflection prompt blocks */
-  .prompt-block{ margin-bottom:20px; }
+  .prompt-block{ margin-bottom:22px; }
   .prompt-block label{
     display:block;
     font-family:var(--font-display);
@@ -468,26 +390,26 @@
   .prompt-block textarea{
     width:100%;
     border:1px solid var(--rule);
-    border-radius:10px;
+    border-radius:8px;
     padding:12px 14px;
-    font-size:16px;
+    font-size:14px;
     line-height:1.7;
     font-family:var(--font-body);
     color:var(--ink);
     outline:none;
     resize:vertical;
-    min-height:80px;
+    min-height:70px;
     background:var(--paper);
   }
   .prompt-block textarea:focus{ border-color:var(--accent); background:#fff; }
 
-  .mood-row{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .mood-row{ display:flex; gap:8px; margin-bottom:22px; }
   .mood-option{
-    width:46px; height:46px;
+    width:42px; height:42px;
     border-radius:50%;
     border:2px solid var(--rule);
     background:#fff;
-    font-size:20px;
+    font-size:19px;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     transition:border-color .15s, transform .1s;
@@ -495,13 +417,13 @@
   .mood-option:hover{ transform:translateY(-2px); }
   .mood-option.selected{ border-color:var(--accent); background:var(--accent-soft); }
 
-  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
   input.date-input{
     border:1px solid var(--rule);
-    border-radius:8px;
-    padding:9px 10px;
+    border-radius:6px;
+    padding:7px 10px;
     font-family:var(--font-mono);
-    font-size:15px;
+    font-size:13px;
     outline:none;
   }
   input.date-input:focus{ border-color:var(--accent); }
@@ -520,31 +442,24 @@
     transition:opacity .2s, transform .2s;
     z-index:50;
     box-shadow:0 8px 24px rgba(0,0,0,0.2);
+    max-width:80vw;
+    text-align:center;
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.error{ background:#8C3A24; }
 
   .modal-overlay{
     position:fixed; inset:0; background:rgba(43,40,38,0.4);
     display:flex; align-items:center; justify-content:center;
     z-index:100;
-    padding:20px;
   }
   .modal-box{
-    background:#fff; border-radius:14px; padding:22px 22px;
-    width:100%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    background:#fff; border-radius:12px; padding:24px 26px;
+    width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
   }
   .modal-box h3{ margin:0 0 8px; font-family:var(--font-display); font-size:17px; }
   .modal-box p{ margin:0 0 18px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
-  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
-  .modal-choice-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
-  .modal-choice{
-    display:flex; align-items:center; gap:10px;
-    border:1px solid var(--rule); border-radius:10px;
-    padding:13px 14px; cursor:pointer; font-size:14.5px; color:var(--ink);
-    background:#fff; text-align:left; width:100%; font-family:var(--font-body);
-  }
-  .modal-choice:active{ background:var(--paper-soft); }
-  .modal-choice svg{ width:18px; height:18px; color:var(--accent-deep); flex:none; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; }
 
   .loading-overlay{
     position:fixed; inset:0; background:rgba(250,247,240,0.85);
@@ -553,53 +468,24 @@
   }
   .hidden{ display:none !important; }
 
-  /* ================= DESKTOP ENHANCEMENT (mobile-first base above) ================= */
-  @media (min-width: 860px){
-    .app{ flex-direction:row; min-height:100vh; }
+  /* off-screen container used only to rasterize content for PDF export */
+  .pdf-render-root{
+    position:fixed;
+    left:-99999px;
+    top:0;
+    background:#ffffff;
+    z-index:-1;
+  }
 
-    .sidebar{
-      display:flex;
-      width:220px;
-      flex:0 0 220px;
-      border-right:1px solid var(--rule);
-      padding:28px 18px;
-      flex-direction:column;
-      gap:6px;
-    }
-
-    .mobile-topbar{ display:none; }
-    .bottom-nav{ display:none; }
-    .fab{ display:none; }
-    .toolbar-new-btn{ display:inline-flex; }
-
-    .main{
-      padding:36px 48px 60px;
-      max-width:880px;
-      margin:0;
-    }
-
-    .view-title{ font-size:28px; }
-    .view-sub{ margin:4px 0 26px; }
-    .toolbar{ margin-bottom:22px; }
-
-    .editor{
-      border:1px solid var(--rule);
-      border-radius:12px;
-      padding:28px 32px;
-      margin:0;
-      min-height:0;
-    }
-    .editor-header{
-      position:static;
-      padding:0 0 18px;
-      margin-bottom:0;
-      border-bottom:none;
-    }
-    .editor-body{ padding:0; }
-    .editor-back .back-label{ display:inline; }
-    .editor-actions button.btn .btn-label{ display:inline; }
-    input.title-input{ font-size:24px; }
-    .meta-row{ margin-bottom:18px; }
+  @media (max-width: 720px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; flex:none; border-right:none; border-bottom:1px solid var(--rule); flex-direction:row; align-items:center; padding:16px 14px; overflow-x:auto; }
+    .brand{ margin:0 12px 0 0; }
+    .sidebar-divider{ display:none; }
+    .sidebar-footer{ display:none; }
+    .nav-item{ white-space:nowrap; }
+    .main{ padding:24px 18px 60px; max-width:100%; }
+    .editor{ padding:20px; }
   }
 
   :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
@@ -635,7 +521,9 @@
     editing: null,           // {type:'note'|'reflect', id: string|null}
     search: "",
     activeTag: null,
-    loaded: false
+    loaded: false,
+    saving: false,           // true while a save is in flight, used to disable export-all etc.
+    exporting: false
   };
 
   const STORAGE_KEY_NOTES = "notebook:notes";
@@ -662,7 +550,28 @@
   }
 
   /* ============ storage ============ */
+  // IMPORTANT: window.storage.set() can fail "silently" by resolving to null
+  // instead of throwing (per the storage API contract). The original code only
+  // caught *thrown* errors, so a null-failure looked identical to success: the
+  // UI showed "已保存" but nothing was actually written, and the entry was lost
+  // on next reload. saveToStorage() now treats a null/falsy result as a real
+  // failure too, and the caller is told whether the save actually succeeded.
+  async function saveToStorage(key, value){
+    try{
+      const result = await window.storage.set(key, value, false);
+      if(!result){
+        console.error("storage.set returned null/falsy for key:", key);
+        return false;
+      }
+      return true;
+    }catch(e){
+      console.error("storage.set threw for key:", key, e);
+      return false;
+    }
+  }
+
   async function loadAll(){
+    if(state.loaded) return; // guard against any double-invocation of loadAll
     showLoading(true);
     try{
       try{
@@ -681,22 +590,21 @@
   }
 
   async function saveNotes(){
-    try{ await window.storage.set(STORAGE_KEY_NOTES, JSON.stringify(state.notes), false); }
-    catch(e){ showToast("保存失败，请重试"); }
+    return saveToStorage(STORAGE_KEY_NOTES, JSON.stringify(state.notes));
   }
   async function saveReflections(){
-    try{ await window.storage.set(STORAGE_KEY_REFLECTIONS, JSON.stringify(state.reflections), false); }
-    catch(e){ showToast("保存失败，请重试"); }
+    return saveToStorage(STORAGE_KEY_REFLECTIONS, JSON.stringify(state.reflections));
   }
 
   /* ============ toast ============ */
   let toastTimer = null;
-  function showToast(msg){
+  function showToast(msg, isError){
     const t = document.getElementById("toast");
     t.textContent = msg;
+    t.classList.toggle("error", !!isError);
     t.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=> t.classList.remove("show"), 2200);
+    toastTimer = setTimeout(()=> t.classList.remove("show"), isError ? 3600 : 2200);
   }
   function showLoading(on){
     document.getElementById("loading").classList.toggle("hidden", !on);
@@ -705,68 +613,32 @@
   /* ============ render root ============ */
   function render(){
     const app = document.getElementById("app");
-    const showChrome = !state.editing;
-    app.innerHTML =
-      sidebarHtml() +
-      (showChrome ? mobileTopbarHtml() : "") +
-      mainHtml() +
-      (showChrome ? bottomNavHtml() + fabHtml() : "");
+    app.innerHTML = sidebarHtml() + mainHtml();
     bindEvents();
   }
 
-  function navMeta(){
+  function sidebarHtml(){
     const noteCount = state.notes.length;
     const reflectCount = state.reflections.length;
     const allCount = noteCount + reflectCount;
-    return [
-      {key:'notes', icon:ICONS.notes, label:'笔记', count:noteCount},
-      {key:'reflect', icon:ICONS.reflect, label:'反思', count:reflectCount},
-      {key:'all', icon:ICONS.all, label:'全部', count:allCount}
-    ];
-  }
-
-  function mobileTopbarHtml(){
-    return `<div class="mobile-topbar">
-      <div class="brand">笔记本<span class="dot">·</span></div>
-    </div>`;
-  }
-
-  function bottomNavHtml(){
-    return `<div class="bottom-nav">
-      ${navMeta().map(it=>{
-        const active = state.view === it.key;
-        return `<div class="bottom-nav-item ${active?'active':''}" data-nav="${it.key}">
-          ${it.icon}
-          <span class="label">${it.label}</span>
-        </div>`;
-      }).join("")}
-    </div>`;
-  }
-
-  function fabHtml(){
-    return `<button class="fab" id="fabBtn" type="button" aria-label="新建">${ICONS.plus}</button>`;
-  }
-
-  function sidebarHtml(){
-    const counts = navMeta();
-    function item(it){
-      const active = state.view === it.key && !state.editing;
-      return `<div class="nav-item ${active?'active':''}" data-nav="${it.key}">
-        <span style="width:15px;height:15px;display:inline-flex">${it.icon}</span>
-        <span>${it.key==='notes'?'笔记':it.key==='reflect'?'每日反思':'全部归档'}</span>
-        <span class="count">${it.count}</span>
+    function item(key, icon, label, count){
+      const active = state.view === key && !state.editing;
+      return `<div class="nav-item ${active?'active':''}" data-nav="${key}">
+        <span style="width:15px;height:15px;display:inline-flex">${icon}</span>
+        <span>${label}</span>
+        <span class="count">${count}</span>
       </div>`;
     }
     return `
     <div class="sidebar">
       <div class="brand">笔记本<span class="dot">·</span></div>
-      ${item(counts[0])}
-      ${item(counts[1])}
+      ${item('notes', ICONS.notes, '笔记', noteCount)}
+      ${item('reflect', ICONS.reflect, '每日反思', reflectCount)}
       <div class="sidebar-divider"></div>
-      ${item(counts[2])}
+      ${item('all', ICONS.all, '全部归档', allCount)}
       <div class="sidebar-footer">
         数据保存在本设备账户下。<br/>
-        <button id="exportAllBtn" type="button">导出全部为 PDF</button>
+        <button id="exportAllBtn" type="button" ${state.exporting?'disabled':''}>${state.exporting? '正在导出…' : '导出全部为 PDF'}</button>
       </div>
     </div>`;
   }
@@ -809,7 +681,7 @@
           ${ICONS.search}
           <input id="searchInput" type="text" placeholder="搜索笔记…" value="${escapeHtml(state.search)}"/>
         </div>
-        <button class="btn primary toolbar-new-btn" id="newNoteBtn" type="button">${ICONS.plus} 新建笔记</button>
+        <button class="btn primary" id="newNoteBtn" type="button">${ICONS.plus} 新建笔记</button>
       </div>
       ${tags.length ? `<div class="tag-filter">
         <span class="tag-chip ${!state.activeTag?'active':''}" data-tag="">全部</span>
@@ -861,7 +733,7 @@
           ${ICONS.search}
           <input id="searchInput" type="text" placeholder="搜索反思…" value="${escapeHtml(state.search)}"/>
         </div>
-        <button class="btn primary toolbar-new-btn" id="newReflectBtn" type="button">${ICONS.plus} 写今天的反思</button>
+        <button class="btn primary" id="newReflectBtn" type="button">${ICONS.plus} 写今天的反思</button>
       </div>
       ${list.length ? `<div class="card-list">${list.map(reflectCardHtml).join("")}</div>` : emptyReflectHtml()}
     </div>`;
@@ -933,25 +805,23 @@
     const isNew = !state.editing.id;
     const n = isNew ? {id:null,title:"",content:"",tags:[]} : getNote(state.editing.id);
     return `
-    <div class="main" style="padding-bottom:0">
+    <div class="main">
       <div class="editor">
         <div class="editor-header">
-          <button class="editor-back" id="backBtn" type="button">${ICONS.back}<span class="back-label">返回笔记</span></button>
+          <button class="editor-back" id="backBtn" type="button">${ICONS.back} 返回笔记</button>
           <div class="editor-actions">
-            ${!isNew ? `<button class="btn" id="pdfNoteBtn" type="button" aria-label="导出 PDF">${ICONS.pdf}<span class="btn-label">导出 PDF</span></button>
-            <button class="btn" id="deleteNoteBtn" type="button" aria-label="删除">${ICONS.trash}<span class="btn-label">删除</span></button>` : ""}
-            <button class="btn primary" id="saveNoteBtn" type="button"><span class="btn-label">保存</span></button>
+            ${!isNew ? `<button class="btn" id="pdfNoteBtn" type="button" ${state.exporting?'disabled':''}>${ICONS.pdf} ${state.exporting?'导出中…':'导出 PDF'}</button>
+            <button class="btn" id="deleteNoteBtn" type="button">${ICONS.trash} 删除</button>` : ""}
+            <button class="btn primary" id="saveNoteBtn" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存'}</button>
           </div>
         </div>
-        <div class="editor-body">
-          <input class="title-input" id="noteTitleInput" type="text" placeholder="标题…" value="${escapeHtml(n.title)}"/>
-          <div class="meta-row">
-            <span>标签</span>
-            <input class="tags-input" id="noteTagsInput" type="text" placeholder="用逗号分隔，例如：工作, 灵感" value="${escapeHtml((n.tags||[]).join(', '))}"/>
-          </div>
-          <hr class="soft"/>
-          <textarea class="content-input" id="noteContentInput" placeholder="开始写下你的想法…">${escapeHtml(n.content)}</textarea>
+        <input class="title-input" id="noteTitleInput" type="text" placeholder="标题…" value="${escapeHtml(n.title)}"/>
+        <div class="meta-row">
+          <span>标签</span>
+          <input class="tags-input" id="noteTagsInput" type="text" placeholder="用逗号分隔，例如：工作, 灵感" value="${escapeHtml((n.tags||[]).join(', '))}"/>
         </div>
+        <hr class="soft"/>
+        <textarea class="content-input" id="noteContentInput" placeholder="开始写下你的想法…">${escapeHtml(n.content)}</textarea>
       </div>
     </div>`;
   }
@@ -960,45 +830,43 @@
     const isNew = !state.editing.id;
     const r = isNew ? {id:null,date:todayStr(),mood:"",highlight:"",challenge:"",grateful:"",tomorrow:""} : getReflection(state.editing.id);
     return `
-    <div class="main" style="padding-bottom:0">
+    <div class="main">
       <div class="editor">
         <div class="editor-header">
-          <button class="editor-back" id="backBtn" type="button">${ICONS.back}<span class="back-label">返回反思</span></button>
+          <button class="editor-back" id="backBtn" type="button">${ICONS.back} 返回反思</button>
           <div class="editor-actions">
-            ${!isNew ? `<button class="btn" id="pdfReflectBtn" type="button" aria-label="导出 PDF">${ICONS.pdf}<span class="btn-label">导出 PDF</span></button>
-            <button class="btn" id="deleteReflectBtn" type="button" aria-label="删除">${ICONS.trash}<span class="btn-label">删除</span></button>` : ""}
-            <button class="btn primary" id="saveReflectBtn" type="button"><span class="btn-label">保存</span></button>
+            ${!isNew ? `<button class="btn" id="pdfReflectBtn" type="button" ${state.exporting?'disabled':''}>${ICONS.pdf} ${state.exporting?'导出中…':'导出 PDF'}</button>
+            <button class="btn" id="deleteReflectBtn" type="button">${ICONS.trash} 删除</button>` : ""}
+            <button class="btn primary" id="saveReflectBtn" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存'}</button>
           </div>
         </div>
 
-        <div class="editor-body">
-          <div class="date-picker-row">
-            <span class="field-label" style="margin:0">日期</span>
-            <input class="date-input" id="reflectDateInput" type="date" value="${r.date}"/>
-            <span style="color:var(--ink-faint);font-size:12.5px">${weekdayOf(r.date)}</span>
-          </div>
+        <div class="date-picker-row">
+          <span class="field-label" style="margin:0">日期</span>
+          <input class="date-input" id="reflectDateInput" type="date" value="${r.date}"/>
+          <span style="color:var(--ink-faint);font-size:12.5px">${weekdayOf(r.date)}</span>
+        </div>
 
-          <p class="field-label">今天的心情</p>
-          <div class="mood-row" id="moodRow">
-            ${MOODS.map(m=>`<div class="mood-option ${r.mood===m?'selected':''}" data-mood="${m}">${m}</div>`).join("")}
-          </div>
+        <p class="field-label">今天的心情</p>
+        <div class="mood-row" id="moodRow">
+          ${MOODS.map(m=>`<div class="mood-option ${r.mood===m?'selected':''}" data-mood="${m}">${m}</div>`).join("")}
+        </div>
 
-          <div class="prompt-block">
-            <label>今天最值得记下的事</label>
-            <textarea id="reflectHighlight" placeholder="发生了什么让你印象深刻、开心或者有成就感的事？">${escapeHtml(r.highlight)}</textarea>
-          </div>
-          <div class="prompt-block">
-            <label>遇到的困难或挑战</label>
-            <textarea id="reflectChallenge" placeholder="哪里不太顺利？是什么原因？">${escapeHtml(r.challenge)}</textarea>
-          </div>
-          <div class="prompt-block">
-            <label>心怀感激的事</label>
-            <textarea id="reflectGrateful" placeholder="今天有什么值得感恩、值得珍惜的小事？">${escapeHtml(r.grateful)}</textarea>
-          </div>
-          <div class="prompt-block">
-            <label>给明天的自己一句话</label>
-            <textarea id="reflectTomorrow" placeholder="想对明天说点什么？想改进、想尝试、想提醒自己的事。">${escapeHtml(r.tomorrow)}</textarea>
-          </div>
+        <div class="prompt-block">
+          <label>今天最值得记下的事</label>
+          <textarea id="reflectHighlight" placeholder="发生了什么让你印象深刻、开心或者有成就感的事？">${escapeHtml(r.highlight)}</textarea>
+        </div>
+        <div class="prompt-block">
+          <label>遇到的困难或挑战</label>
+          <textarea id="reflectChallenge" placeholder="哪里不太顺利？是什么原因？">${escapeHtml(r.challenge)}</textarea>
+        </div>
+        <div class="prompt-block">
+          <label>心怀感激的事</label>
+          <textarea id="reflectGrateful" placeholder="今天有什么值得感恩、值得珍惜的小事？">${escapeHtml(r.grateful)}</textarea>
+        </div>
+        <div class="prompt-block">
+          <label>给明天的自己一句话</label>
+          <textarea id="reflectTomorrow" placeholder="想对明天说点什么？想改进、想尝试、想提醒自己的事。">${escapeHtml(r.tomorrow)}</textarea>
         </div>
       </div>
     </div>`;
@@ -1036,10 +904,11 @@
     if(newNoteBtn) newNoteBtn.addEventListener("click", ()=>{ state.editing = {type:'note', id:null}; render(); });
 
     const newReflectBtn = document.getElementById("newReflectBtn");
-    if(newReflectBtn) newReflectBtn.addEventListener("click", openTodayReflect);
-
-    const fabBtn = document.getElementById("fabBtn");
-    if(fabBtn) fabBtn.addEventListener("click", handleFabClick);
+    if(newReflectBtn) newReflectBtn.addEventListener("click", ()=>{
+      const existing = state.reflections.find(r=>r.date===todayStr());
+      state.editing = {type:'reflect', id: existing ? existing.id : null};
+      render();
+    });
 
     document.querySelectorAll("[data-open-note]").forEach(el=>{
       el.addEventListener("click", ()=>{ state.editing = {type:'note', id: el.getAttribute("data-open-note")}; render(); });
@@ -1096,7 +965,14 @@
   }
 
   /* ============ save / delete handlers ============ */
+  // NOTE ON THE "NOTES DISAPPEAR AFTER RELOAD" BUG:
+  // saveNotes()/saveReflections() now return true/false depending on whether the
+  // write actually succeeded (see saveToStorage above). We only leave the editor
+  // and show "已保存" when the save truly succeeded. If it failed, we keep the
+  // user in the editor with their text intact and let them retry, instead of
+  // pretending it saved and quietly losing the entry.
   async function saveNoteFromEditor(){
+    if(state.saving) return;
     const title = document.getElementById("noteTitleInput").value.trim();
     const content = document.getElementById("noteContentInput").value;
     const tagsRaw = document.getElementById("noteTagsInput").value;
@@ -1108,13 +984,34 @@
       return;
     }
 
-    if(state.editing.id){
+    // Keep a snapshot so we can roll back state.notes if the save fails after
+    // we've already mutated it (needed for the "new note" push case).
+    const isNew = !state.editing.id;
+    const previousNotes = state.notes.slice();
+
+    let targetId = state.editing.id;
+    if(!isNew){
       const n = getNote(state.editing.id);
       n.title = title; n.content = content; n.tags = tags; n.updated = now;
     } else {
-      state.notes.push({id: uid(), title, content, tags, created: now, updated: now});
+      targetId = uid();
+      state.notes.push({id: targetId, title, content, tags, created: now, updated: now});
     }
-    await saveNotes();
+
+    state.saving = true;
+    render();
+
+    const ok = await saveNotes();
+
+    state.saving = false;
+
+    if(!ok){
+      state.notes = previousNotes; // roll back the in-memory change
+      render();
+      showToast("保存失败，请检查网络后重试", true);
+      return;
+    }
+
     state.editing = null;
     state.view = "notes";
     render();
@@ -1122,6 +1019,7 @@
   }
 
   async function saveReflectFromEditor(){
+    if(state.saving) return;
     const date = document.getElementById("reflectDateInput").value || todayStr();
     const moodRow = document.getElementById("moodRow");
     const mood = moodRow ? (moodRow.dataset.selected || (moodRow.querySelector(".mood-option.selected")?.getAttribute("data-mood")) || "") : "";
@@ -1130,6 +1028,8 @@
     const grateful = document.getElementById("reflectGrateful").value;
     const tomorrow = document.getElementById("reflectTomorrow").value;
     const now = new Date().toISOString();
+
+    const previousReflections = state.reflections.slice();
 
     if(state.editing.id){
       const r = getReflection(state.editing.id);
@@ -1143,54 +1043,25 @@
         state.reflections.push({id: uid(), date, mood, highlight, challenge, grateful, tomorrow, created: now, updated: now});
       }
     }
-    await saveReflections();
+
+    state.saving = true;
+    render();
+
+    const ok = await saveReflections();
+
+    state.saving = false;
+
+    if(!ok){
+      state.reflections = previousReflections;
+      render();
+      showToast("保存失败，请检查网络后重试", true);
+      return;
+    }
+
     state.editing = null;
     state.view = "reflect";
     render();
     showToast("已保存");
-  }
-
-  function openTodayReflect(){
-    const existing = state.reflections.find(r=>r.date===todayStr());
-    state.editing = {type:'reflect', id: existing ? existing.id : null};
-    render();
-  }
-
-  function handleFabClick(){
-    if(state.view === "notes"){
-      state.editing = {type:'note', id:null};
-      render();
-      return;
-    }
-    if(state.view === "reflect"){
-      openTodayReflect();
-      return;
-    }
-    // "all" view: ask which kind of entry to create
-    const overlay = document.createElement("div");
-    overlay.className = "modal-overlay";
-    overlay.innerHTML = `<div class="modal-box">
-      <h3>新建</h3>
-      <p>想写点什么？</p>
-      <div class="modal-choice-list">
-        <button class="modal-choice" id="chooseNote" type="button">${ICONS.notes} 新建笔记</button>
-        <button class="modal-choice" id="chooseReflect" type="button">${ICONS.reflect} 写今天的反思</button>
-      </div>
-      <div class="modal-actions">
-        <button class="btn" id="cancelChoice" type="button">取消</button>
-      </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    overlay.querySelector("#cancelChoice").addEventListener("click", ()=> overlay.remove());
-    overlay.querySelector("#chooseNote").addEventListener("click", ()=>{
-      overlay.remove();
-      state.editing = {type:'note', id:null};
-      render();
-    });
-    overlay.querySelector("#chooseReflect").addEventListener("click", ()=>{
-      overlay.remove();
-      openTodayReflect();
-    });
   }
 
   function confirmDelete(type, id){
@@ -1207,191 +1078,215 @@
     document.body.appendChild(overlay);
     overlay.querySelector("#cancelDel").addEventListener("click", ()=> overlay.remove());
     overlay.querySelector("#confirmDel").addEventListener("click", async ()=>{
+      const confirmBtn = overlay.querySelector("#confirmDel");
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "删除中…";
+
+      let ok;
+      let previous;
       if(type==='note'){
+        previous = state.notes.slice();
         state.notes = state.notes.filter(n=>n.id!==id);
-        await saveNotes();
-        state.view = "notes";
+        ok = await saveNotes();
+        if(ok) state.view = "notes"; else state.notes = previous;
       } else {
+        previous = state.reflections.slice();
         state.reflections = state.reflections.filter(r=>r.id!==id);
-        await saveReflections();
-        state.view = "reflect";
+        ok = await saveReflections();
+        if(ok) state.view = "reflect"; else state.reflections = previous;
       }
-      state.editing = null;
+
       overlay.remove();
+
+      if(!ok){
+        showToast("删除失败，请检查网络后重试", true);
+        return;
+      }
+
+      state.editing = null;
       render();
       showToast("已删除");
     });
   }
 
   /* ============ PDF export ============ */
+  // WHY THE OLD PDF EXPORT SHOWED GARBLED TEXT:
+  // jsPDF's built-in fonts (helvetica/times/courier) only encode the Latin
+  // WinAnsi character set. Calling doc.text() with Chinese characters does not
+  // throw an error -- it silently maps each CJK character to whatever random
+  // glyph that byte value happens to represent in WinAnsi, which is what
+  // produced the "乱码" (garbled characters).
+  //
+  // FIX: instead of asking jsPDF to draw text directly, we build a normal,
+  // styled HTML element (using the same system fonts the rest of the app uses,
+  // which DO support Chinese), and use jsPDF's html() method -- powered by
+  // html2canvas -- to rasterize that real, correctly-rendered HTML into the
+  // PDF. This guarantees the PDF shows exactly what's on screen.
+
   function newPdfDoc(){
     const { jsPDF } = window.jspdf;
     return new jsPDF({ unit: "pt", format: "a4" });
   }
 
-  function pdfHeader(doc, title, subtitle, y){
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(40,38,36);
-    doc.text(title, 56, y);
-    y += 20;
-    if(subtitle){
-      doc.setFont("helvetica","normal");
-      doc.setFontSize(10);
-      doc.setTextColor(140,132,121);
-      doc.text(subtitle, 56, y);
-      y += 18;
-    }
-    doc.setDrawColor(227,221,205);
-    doc.line(56, y, 539, y);
-    y += 22;
-    return y;
-  }
+  const PDF_PAGE_WIDTH_PT = 595.28; // A4 width in pt
+  const PDF_MARGIN_PT = 40;
+  const PDF_CONTENT_WIDTH_PT = PDF_PAGE_WIDTH_PT - PDF_MARGIN_PT * 2;
 
-  function writeWrapped(doc, text, x, y, maxWidth, lineHeight, pageBottom){
-    const lines = doc.splitTextToSize(text && text.trim() ? text : "（未填写）", maxWidth);
-    lines.forEach(line=>{
-      if(y > pageBottom){ doc.addPage(); y = 56; }
-      doc.text(line, x, y);
-      y += lineHeight;
+  // Renders `innerHtml` (a fragment) into an offscreen container, converts it
+  // to a paginated PDF via jsPDF's html() (html2canvas-backed), saves it as
+  // `filename`, and always cleans up the offscreen DOM node + UI state.
+  function renderHtmlToPdf(innerHtml, filename){
+    return new Promise((resolve, reject)=>{
+      const container = document.createElement("div");
+      container.className = "pdf-render-root";
+      container.style.width = "640px"; // CSS px render width; scaled to fit the PDF page
+      container.style.padding = "32px 36px";
+      container.style.fontFamily = "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif";
+      container.style.color = "#2B2826";
+      container.style.boxSizing = "border-box";
+      container.innerHTML = innerHtml;
+      document.body.appendChild(container);
+
+      const cleanup = ()=>{
+        if(container.parentNode) container.parentNode.removeChild(container);
+      };
+
+      try{
+        const doc = newPdfDoc();
+        doc.html(container, {
+          x: PDF_MARGIN_PT,
+          y: PDF_MARGIN_PT,
+          width: PDF_CONTENT_WIDTH_PT,
+          windowWidth: 640,
+          autoPaging: "text",
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+          callback: function(finishedDoc){
+            cleanup();
+            try{
+              finishedDoc.save(filename);
+              resolve();
+            }catch(e){
+              reject(e);
+            }
+          }
+        });
+      }catch(e){
+        cleanup();
+        reject(e);
+      }
     });
-    return y;
   }
 
-  function exportNotePdf(n){
-    if(!n) return;
+  function noteToPdfHtml(n){
+    const tagsLine = (n.tags && n.tags.length) ? `　·　标签：${escapeHtml(n.tags.join(', '))}` : "";
+    return `
+      <div style="font-size:21px;font-weight:700;margin:0 0 6px;line-height:1.4;">${escapeHtml(n.title || "无标题笔记")}</div>
+      <div style="font-size:11px;color:#8A8479;margin-bottom:16px;">更新于 ${fmtDateTime(n.updated)}${tagsLine}</div>
+      <div style="border-top:1px solid #E3DDCD;margin-bottom:16px;"></div>
+      <div style="font-size:13.5px;line-height:1.85;white-space:pre-wrap;">${escapeHtml(n.content && n.content.trim() ? n.content : "（空）")}</div>
+    `;
+  }
+
+  function reflectionToPdfHtml(r){
+    const sections = [
+      ["今天最值得记下的事", r.highlight],
+      ["遇到的困难或挑战", r.challenge],
+      ["心怀感激的事", r.grateful],
+      ["给明天的自己一句话", r.tomorrow]
+    ];
+    const sectionsHtml = sections.map(([label, text])=> `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;color:#9B4A1E;margin-bottom:6px;">${escapeHtml(label)}</div>
+        <div style="font-size:13px;line-height:1.8;white-space:pre-wrap;">${escapeHtml(text && text.trim() ? text : "（未填写）")}</div>
+      </div>
+    `).join("");
+    return `
+      <div style="font-size:19px;font-weight:700;margin:0 0 4px;">${fmtDate(r.date)} ${weekdayOf(r.date)} ${escapeHtml(r.mood||"")}</div>
+      <div style="border-top:1px solid #E3DDCD;margin:12px 0 16px;"></div>
+      ${sectionsHtml}
+    `;
+  }
+
+  async function exportNotePdf(n){
+    if(!n || state.exporting) return;
+    state.exporting = true;
+    render();
     try{
-      const doc = newPdfDoc();
-      let y = pdfHeader(doc, n.title || "无标题笔记", `更新于 ${fmtDateTime(n.updated)}${(n.tags&&n.tags.length)?'  ·  标签：'+n.tags.join(', '):''}`, 64);
-      doc.setFont("helvetica","normal");
-      doc.setFontSize(12);
-      doc.setTextColor(43,40,38);
-      writeWrapped(doc, n.content, 56, y, 483, 17, 760);
-      doc.save(`${(n.title||'笔记').slice(0,30)}.pdf`);
+      await renderHtmlToPdf(noteToPdfHtml(n), `${(n.title||'笔记').slice(0,30) || '笔记'}.pdf`);
       showToast("PDF 已生成");
     }catch(e){
       console.error(e);
-      showToast("导出失败：" + e.message);
+      showToast("导出失败：" + e.message, true);
+    }finally{
+      state.exporting = false;
+      render();
     }
   }
 
-  function exportReflectionPdf(r){
-    if(!r) return;
+  async function exportReflectionPdf(r){
+    if(!r || state.exporting) return;
+    state.exporting = true;
+    render();
     try{
-      const doc = newPdfDoc();
-      let y = pdfHeader(doc, `${fmtDate(r.date)} ${weekdayOf(r.date)} 的反思`, r.mood ? `心情：${r.mood}` : "", 64);
-      const sections = [
-        ["今天最值得记下的事", r.highlight],
-        ["遇到的困难或挑战", r.challenge],
-        ["心怀感激的事", r.grateful],
-        ["给明天的自己一句话", r.tomorrow]
-      ];
-      doc.setFontSize(12);
-      sections.forEach(([label, text])=>{
-        if(y > 740){ doc.addPage(); y = 56; }
-        doc.setFont("helvetica","bold");
-        doc.setTextColor(155,74,30);
-        doc.text(label, 56, y);
-        y += 18;
-        doc.setFont("helvetica","normal");
-        doc.setTextColor(43,40,38);
-        y = writeWrapped(doc, text, 56, y, 483, 17, 760);
-        y += 12;
-      });
-      doc.save(`反思-${r.date}.pdf`);
+      await renderHtmlToPdf(reflectionToPdfHtml(r), `反思-${r.date}.pdf`);
       showToast("PDF 已生成");
     }catch(e){
       console.error(e);
-      showToast("导出失败：" + e.message);
+      showToast("导出失败：" + e.message, true);
+    }finally{
+      state.exporting = false;
+      render();
     }
   }
 
-  function exportAllToPdf(){
+  async function exportAllToPdf(){
+    if(state.exporting) return;
     if(state.notes.length===0 && state.reflections.length===0){
       showToast("还没有内容可以导出");
       return;
     }
+    state.exporting = true;
+    render();
+
     try{
-      const doc = newPdfDoc();
-      let y = pdfHeader(doc, "我的笔记本", `导出于 ${fmtDateTime(new Date().toISOString())}  ·  共 ${state.notes.length} 条笔记，${state.reflections.length} 篇反思`, 64);
+      let html = `
+        <div style="font-size:24px;font-weight:700;margin:0 0 6px;">我的笔记本</div>
+        <div style="font-size:11px;color:#8A8479;margin-bottom:18px;">导出于 ${fmtDateTime(new Date().toISOString())}　·　共 ${state.notes.length} 条笔记，${state.reflections.length} 篇反思</div>
+        <div style="border-top:1px solid #E3DDCD;margin-bottom:20px;"></div>
+      `;
 
       if(state.notes.length){
-        doc.setFont("helvetica","bold");
-        doc.setFontSize(14);
-        doc.setTextColor(40,38,36);
-        if(y > 740){ doc.addPage(); y = 56; }
-        doc.text("笔记", 56, y);
-        y += 20;
+        html += `<div style="font-size:16px;font-weight:700;margin-bottom:14px;">笔记</div>`;
         const sortedNotes = state.notes.slice().sort((a,b)=> b.updated.localeCompare(a.updated));
-        sortedNotes.forEach(n=>{
-          if(y > 730){ doc.addPage(); y = 56; }
-          doc.setFont("helvetica","bold");
-          doc.setFontSize(12.5);
-          doc.setTextColor(43,40,38);
-          y = writeWrapped(doc, n.title || "无标题笔记", 56, y, 483, 16, 760);
-          doc.setFont("helvetica","normal");
-          doc.setFontSize(10);
-          doc.setTextColor(140,132,121);
-          doc.text(fmtDateTime(n.updated) + ((n.tags&&n.tags.length)? '   标签：'+n.tags.join(', ') : ''), 56, y);
-          y += 14;
-          doc.setFontSize(11.5);
-          doc.setTextColor(43,40,38);
-          y = writeWrapped(doc, n.content, 56, y, 483, 15.5, 760);
-          y += 14;
-          doc.setDrawColor(230,224,212);
-          if(y > 745){ doc.addPage(); y = 56; } else { doc.line(56,y,539,y); y += 16; }
+        sortedNotes.forEach((n, idx)=>{
+          html += `<div style="margin-bottom:18px;${idx>0?'padding-top:16px;border-top:1px solid #E6E0D4;':''}">${noteToPdfHtml(n)}</div>`;
         });
       }
 
       if(state.reflections.length){
-        if(y > 700){ doc.addPage(); y = 56; }
-        doc.setFont("helvetica","bold");
-        doc.setFontSize(14);
-        doc.setTextColor(40,38,36);
-        doc.text("每日反思", 56, y);
-        y += 20;
+        html += `<div style="font-size:16px;font-weight:700;margin:8px 0 14px;">每日反思</div>`;
         const sortedR = state.reflections.slice().sort((a,b)=> b.date.localeCompare(a.date));
-        sortedR.forEach(r=>{
-          if(y > 700){ doc.addPage(); y = 56; }
-          doc.setFont("helvetica","bold");
-          doc.setFontSize(12.5);
-          doc.setTextColor(155,74,30);
-          doc.text(`${fmtDate(r.date)} ${weekdayOf(r.date)} ${r.mood||""}`, 56, y);
-          y += 16;
-          const sections = [
-            ["今天最值得记下的事", r.highlight],
-            ["遇到的困难或挑战", r.challenge],
-            ["心怀感激的事", r.grateful],
-            ["给明天的自己一句话", r.tomorrow]
-          ];
-          sections.forEach(([label,text])=>{
-            if(!text || !text.trim()) return;
-            if(y > 745){ doc.addPage(); y = 56; }
-            doc.setFont("helvetica","bold");
-            doc.setFontSize(10.5);
-            doc.setTextColor(90,86,76);
-            doc.text(label + "：", 56, y);
-            y += 14;
-            doc.setFont("helvetica","normal");
-            doc.setFontSize(11);
-            doc.setTextColor(43,40,38);
-            y = writeWrapped(doc, text, 56, y, 483, 15, 760);
-            y += 8;
-          });
-          y += 10;
-          if(y > 745){ doc.addPage(); y = 56; } else { doc.setDrawColor(230,224,212); doc.line(56,y,539,y); y += 16; }
+        sortedR.forEach((r, idx)=>{
+          html += `<div style="margin-bottom:18px;${idx>0?'padding-top:16px;border-top:1px solid #E6E0D4;':''}">${reflectionToPdfHtml(r)}</div>`;
         });
       }
 
-      doc.save(`我的笔记本-${todayStr()}.pdf`);
+      await renderHtmlToPdf(html, `我的笔记本-${todayStr()}.pdf`);
       showToast("PDF 已生成");
     }catch(e){
       console.error(e);
-      showToast("导出失败：" + e.message);
+      showToast("导出失败：" + e.message, true);
+    }finally{
+      state.exporting = false;
+      render();
     }
   }
 
   /* ============ boot ============ */
+  // Guarded by the `state.loaded` check inside loadAll() itself, so even if
+  // both the event listener and the immediate readyState check were to fire
+  // in unusual host environments, we will not read storage twice or risk a
+  // stale read clobbering a freshly-saved entry.
   document.addEventListener("DOMContentLoaded", loadAll);
   if(document.readyState !== "loading") loadAll();
 
