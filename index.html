@@ -33,21 +33,76 @@
     min-height:100vh;
   }
 
-  /* faint paper texture via repeating lines */
+  /* ============================================================
+     MOBILE-FIRST BASE STYLES
+     Everything below (until the "DESKTOP ENHANCEMENTS" media query
+     near the end of this stylesheet) targets small/touch screens by
+     default. Desktop is the progressive enhancement, not the other
+     way around.
+     ============================================================ */
+
   .app{
-    display:flex;
+    display:block;
     min-height:100vh;
     background-image:
       linear-gradient(var(--paper) 0%, var(--paper) 100%);
   }
 
-  /* ---------- sidebar ---------- */
+  /* ---------- mobile top bar (brand strip) ---------- */
+  .mobile-topbar{
+    position:sticky;
+    top:0;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    background:var(--paper);
+    border-bottom:1px solid var(--rule);
+    padding:14px 18px;
+  }
+  .mobile-topbar-brand{
+    font-family:var(--font-display);
+    font-size:17px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .brand .dot, .mobile-topbar-brand .dot{ color:var(--accent); }
+
+  /* ---------- bottom tab bar (mobile primary nav) ---------- */
+  .bottom-nav{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:40;
+    display:flex;
+    background:#fff;
+    border-top:1px solid var(--rule);
+    padding:6px 6px max(8px, env(safe-area-inset-bottom));
+    box-shadow:0 -2px 14px rgba(43,40,38,0.04);
+  }
+  .bottom-nav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    min-height:50px;
+    border-radius:10px;
+    color:var(--ink-faint);
+    cursor:pointer;
+    user-select:none;
+  }
+  .bottom-nav-item.active{ color:var(--accent-deep); }
+  .bottom-nav-icon{ width:21px; height:21px; display:inline-flex; }
+  .bottom-nav-icon svg{ width:100%; height:100%; }
+  .bottom-nav-label{ font-size:11px; font-weight:600; }
+
+  /* ---------- sidebar (desktop only — see media query below) ---------- */
   .sidebar{
+    display:none;
     width:220px;
     flex:0 0 220px;
     border-right:1px solid var(--rule);
     padding:28px 18px;
-    display:flex;
     flex-direction:column;
     gap:6px;
   }
@@ -59,7 +114,6 @@
     margin:0 6px 28px 6px;
     color:var(--ink);
   }
-  .brand .dot{color:var(--accent);}
 
   .nav-item{
     display:flex;
@@ -100,18 +154,12 @@
     color:var(--ink-faint);
     line-height:1.6;
   }
-  .sidebar-footer button{
-    background:none;border:none;color:var(--ink-faint);
-    text-decoration:underline;cursor:pointer;font-size:11.5px;padding:0;
-  }
-  .sidebar-footer button:hover{ color:var(--accent-deep); }
-  .sidebar-footer button:disabled{ opacity:.5; cursor:default; text-decoration:none; }
 
   /* ---------- main ---------- */
   .main{
     flex:1;
     min-width:0;
-    padding:36px 48px 60px;
+    padding:20px 16px calc(84px + env(safe-area-inset-bottom));
     max-width:880px;
   }
 
@@ -123,55 +171,57 @@
   }
   .view-title{
     font-family:var(--font-display);
-    font-size:28px;
+    font-size:23px;
     margin:0;
   }
   .view-sub{
     color:var(--ink-faint);
     font-size:13px;
-    margin:4px 0 26px;
+    margin:4px 0 18px;
   }
 
   .toolbar{
     display:flex;
     gap:10px;
-    margin-bottom:22px;
+    margin-bottom:18px;
     flex-wrap:wrap;
     align-items:center;
   }
   .search-box{
-    flex:1;
+    flex:1 1 100%;
     min-width:160px;
     position:relative;
   }
   .search-box input{
     width:100%;
-    padding:9px 12px 9px 32px;
+    padding:12px 12px 12px 34px;
     border:1px solid var(--rule);
-    border-radius:7px;
+    border-radius:9px;
     background:#fff;
-    font-size:13.5px;
+    font-size:15px;
     color:var(--ink);
     outline:none;
     font-family:var(--font-body);
   }
   .search-box input:focus{ border-color:var(--accent); }
   .search-box svg{
-    position:absolute; left:10px; top:50%; transform:translateY(-50%);
-    width:14px; height:14px; color:var(--ink-faint);
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    width:15px; height:15px; color:var(--ink-faint);
   }
 
   button.btn{
     border:1px solid var(--rule);
     background:#fff;
     color:var(--ink-soft);
-    padding:9px 14px;
-    border-radius:7px;
-    font-size:13.5px;
+    padding:11px 16px;
+    min-height:44px;
+    border-radius:9px;
+    font-size:14.5px;
     cursor:pointer;
     font-family:var(--font-body);
     display:inline-flex;
     align-items:center;
+    justify-content:center;
     gap:6px;
     transition:border-color .15s, color .15s, background .15s;
     white-space:nowrap;
@@ -184,20 +234,23 @@
     font-weight:600;
   }
   button.btn.primary:hover{ background:var(--accent-deep); border-color:var(--accent-deep); }
-  button.btn svg{ width:14px; height:14px; }
+  button.btn svg{ width:15px; height:15px; flex:0 0 auto; }
   button.btn:disabled{ opacity:.45; cursor:default; }
+  button.btn.block{ width:100%; flex:1 1 100%; }
 
   .tag-filter{
-    display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;
+    display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;
+    -webkit-overflow-scrolling:touch;
   }
   .tag-chip{
-    padding:4px 10px;
+    padding:7px 13px;
     border-radius:20px;
     background:var(--paper-soft);
     color:var(--ink-soft);
-    font-size:12px;
+    font-size:12.5px;
     cursor:pointer;
     border:1px solid transparent;
+    white-space:nowrap;
   }
   .tag-chip.active{
     background:var(--accent-soft);
@@ -308,20 +361,35 @@
     background:#fff;
     border:1px solid var(--rule);
     border-radius:12px;
-    padding:28px 32px;
+    padding:18px;
   }
   .editor-header{
-    display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin-bottom:16px;
   }
   .editor-back{
     color:var(--ink-faint);
-    font-size:13px;
+    font-size:14px;
     cursor:pointer;
     display:flex; align-items:center; gap:5px;
-    background:none; border:none; padding:0; font-family:var(--font-body);
+    background:none; border:none; padding:6px 0; font-family:var(--font-body);
+    min-height:32px;
   }
   .editor-back:hover{ color:var(--ink); }
-  .editor-actions{ display:flex; gap:8px; }
+  .editor-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  /* Save lives in the fixed mobile-save-bar on small screens, and only
+     reappears inline here once the desktop layout kicks in. */
+  .editor-actions .save-trigger.desktop-save-btn{ display:none; }
+
+  /* sticky save bar — primary action, thumb-reachable, mobile only */
+  .mobile-save-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:45;
+    background:#fff;
+    border-top:1px solid var(--rule);
+    padding:12px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  .mobile-save-bar .btn{ width:100%; padding:13px; font-size:15px; }
 
   .field-label{
     font-size:11.5px;
@@ -335,7 +403,7 @@
     width:100%;
     border:none;
     font-family:var(--font-display);
-    font-size:24px;
+    font-size:21px;
     font-weight:600;
     color:var(--ink);
     outline:none;
@@ -351,12 +419,13 @@
   }
   input.tags-input{
     border:1px solid var(--rule);
-    border-radius:6px;
-    padding:6px 10px;
-    font-size:12.5px;
+    border-radius:7px;
+    padding:9px 11px;
+    font-size:13px;
     outline:none;
     font-family:var(--font-body);
     min-width:200px;
+    flex:1;
   }
   input.tags-input:focus{ border-color:var(--accent); }
 
@@ -403,13 +472,13 @@
   }
   .prompt-block textarea:focus{ border-color:var(--accent); background:#fff; }
 
-  .mood-row{ display:flex; gap:8px; margin-bottom:22px; }
+  .mood-row{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
   .mood-option{
-    width:42px; height:42px;
+    width:46px; height:46px;
     border-radius:50%;
     border:2px solid var(--rule);
     background:#fff;
-    font-size:19px;
+    font-size:20px;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     transition:border-color .15s, transform .1s;
@@ -417,13 +486,13 @@
   .mood-option:hover{ transform:translateY(-2px); }
   .mood-option.selected{ border-color:var(--accent); background:var(--accent-soft); }
 
-  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
   input.date-input{
     border:1px solid var(--rule);
-    border-radius:6px;
-    padding:7px 10px;
+    border-radius:7px;
+    padding:9px 11px;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:13.5px;
     outline:none;
   }
   input.date-input:focus{ border-color:var(--accent); }
@@ -452,10 +521,11 @@
     position:fixed; inset:0; background:rgba(43,40,38,0.4);
     display:flex; align-items:center; justify-content:center;
     z-index:100;
+    padding:20px;
   }
   .modal-box{
-    background:#fff; border-radius:12px; padding:24px 26px;
-    width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    background:#fff; border-radius:12px; padding:22px 22px;
+    width:min(340px, 100%); box-shadow:0 20px 60px rgba(0,0,0,0.25);
   }
   .modal-box h3{ margin:0 0 8px; font-family:var(--font-display); font-size:17px; }
   .modal-box p{ margin:0 0 18px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
@@ -477,15 +547,40 @@
     z-index:-1;
   }
 
-  @media (max-width: 720px){
-    .app{ flex-direction:column; }
-    .sidebar{ width:100%; flex:none; border-right:none; border-bottom:1px solid var(--rule); flex-direction:row; align-items:center; padding:16px 14px; overflow-x:auto; }
-    .brand{ margin:0 12px 0 0; }
-    .sidebar-divider{ display:none; }
-    .sidebar-footer{ display:none; }
-    .nav-item{ white-space:nowrap; }
-    .main{ padding:24px 18px 60px; max-width:100%; }
-    .editor{ padding:20px; }
+  /* ============================================================
+     DESKTOP ENHANCEMENTS
+     Mobile is the default above; from here on we progressively
+     enhance for larger, pointer-driven screens.
+     ============================================================ */
+  @media (min-width: 860px){
+    .mobile-topbar{ display:none; }
+    .bottom-nav{ display:none; }
+    .mobile-save-bar{ display:none; }
+
+    .app{ display:flex; }
+    .sidebar{ display:flex; }
+
+    .main{ padding:36px 48px 60px; max-width:880px; }
+    .view-title{ font-size:28px; }
+    .view-sub{ margin:4px 0 26px; }
+    .toolbar{ margin-bottom:22px; }
+    .search-box{ flex:1 1 auto; }
+    .search-box input{ padding:9px 12px 9px 32px; font-size:13.5px; }
+    .search-box svg{ width:14px; height:14px; }
+    button.btn{ padding:9px 14px; min-height:auto; font-size:13.5px; }
+    button.btn svg{ width:14px; height:14px; }
+    .tag-filter{ margin-bottom:18px; }
+    .tag-chip{ padding:4px 10px; font-size:12px; }
+
+    .editor{ padding:28px 32px; }
+    .editor-header{ flex-wrap:nowrap; margin-bottom:18px; }
+    .editor-back{ font-size:13px; }
+    .editor-actions .save-trigger.desktop-save-btn{ display:inline-flex; }
+
+    input.title-input{ font-size:24px; }
+    input.tags-input{ padding:6px 10px; font-size:12.5px; flex:none; }
+    .mood-option{ width:42px; height:42px; font-size:19px; }
+    input.date-input{ padding:7px 10px; font-size:13px; }
   }
 
   :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
@@ -613,32 +708,59 @@
   /* ============ render root ============ */
   function render(){
     const app = document.getElementById("app");
-    app.innerHTML = sidebarHtml() + mainHtml();
+    const showBottomNav = !state.editing; // full-screen editor hides tab bar, gains sticky save bar instead
+    app.innerHTML = topBarMobileHtml() + sidebarHtml() + mainHtml() + (showBottomNav ? bottomNavHtml() : "");
     bindEvents();
   }
 
-  function sidebarHtml(){
+  function topBarMobileHtml(){
+    return `<div class="mobile-topbar">
+      <span class="mobile-topbar-brand">笔记本<span class="dot">·</span></span>
+    </div>`;
+  }
+
+  function navItems(){
     const noteCount = state.notes.length;
     const reflectCount = state.reflections.length;
     const allCount = noteCount + reflectCount;
-    function item(key, icon, label, count){
-      const active = state.view === key && !state.editing;
-      return `<div class="nav-item ${active?'active':''}" data-nav="${key}">
-        <span style="width:15px;height:15px;display:inline-flex">${icon}</span>
-        <span>${label}</span>
-        <span class="count">${count}</span>
+    return [
+      { key:'notes', icon:ICONS.notes, label:'笔记', count:noteCount },
+      { key:'reflect', icon:ICONS.reflect, label:'每日反思', count:reflectCount },
+      { key:'all', icon:ICONS.all, label:'全部归档', count:allCount }
+    ];
+  }
+
+  function bottomNavHtml(){
+    const items = navItems();
+    function item(it){
+      const active = state.view === it.key && !state.editing;
+      return `<div class="bottom-nav-item ${active?'active':''}" data-nav="${it.key}">
+        <span class="bottom-nav-icon">${it.icon}</span>
+        <span class="bottom-nav-label">${it.label.replace('每日','').replace('全部','')}</span>
+      </div>`;
+    }
+    return `<div class="bottom-nav">${items.map(item).join("")}</div>`;
+  }
+
+  function sidebarHtml(){
+    const items = navItems();
+    function item(it){
+      const active = state.view === it.key && !state.editing;
+      return `<div class="nav-item ${active?'active':''}" data-nav="${it.key}">
+        <span style="width:15px;height:15px;display:inline-flex">${it.icon}</span>
+        <span>${it.label}</span>
+        <span class="count">${it.count}</span>
       </div>`;
     }
     return `
     <div class="sidebar">
       <div class="brand">笔记本<span class="dot">·</span></div>
-      ${item('notes', ICONS.notes, '笔记', noteCount)}
-      ${item('reflect', ICONS.reflect, '每日反思', reflectCount)}
+      ${item(items[0])}
+      ${item(items[1])}
       <div class="sidebar-divider"></div>
-      ${item('all', ICONS.all, '全部归档', allCount)}
+      ${item(items[2])}
       <div class="sidebar-footer">
-        数据保存在本设备账户下。<br/>
-        <button id="exportAllBtn" type="button" ${state.exporting?'disabled':''}>${state.exporting? '正在导出…' : '导出全部为 PDF'}</button>
+        数据保存在本设备账户下。
       </div>
     </div>`;
   }
@@ -787,6 +909,7 @@
           ${ICONS.search}
           <input id="searchInput" type="text" placeholder="搜索全部内容…" value="${escapeHtml(state.search)}"/>
         </div>
+        <button class="btn" id="exportAllBtn" type="button" ${state.exporting?'disabled':''}>${ICONS.pdf} ${state.exporting? '正在导出…' : '导出全部为 PDF'}</button>
       </div>
       ${list.length ? `<div class="card-list">${list.map(it=> it.type==='note' ? noteCardHtml(it.data) : reflectCardHtml(it.data)).join("")}</div>` : `<div class="empty-state"><div class="big">还没有任何内容</div>去写一条笔记或一篇反思吧。</div>`}
     </div>`;
@@ -812,7 +935,7 @@
           <div class="editor-actions">
             ${!isNew ? `<button class="btn" id="pdfNoteBtn" type="button" ${state.exporting?'disabled':''}>${ICONS.pdf} ${state.exporting?'导出中…':'导出 PDF'}</button>
             <button class="btn" id="deleteNoteBtn" type="button">${ICONS.trash} 删除</button>` : ""}
-            <button class="btn primary" id="saveNoteBtn" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存'}</button>
+            <button class="btn primary save-trigger desktop-save-btn" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存'}</button>
           </div>
         </div>
         <input class="title-input" id="noteTitleInput" type="text" placeholder="标题…" value="${escapeHtml(n.title)}"/>
@@ -823,6 +946,9 @@
         <hr class="soft"/>
         <textarea class="content-input" id="noteContentInput" placeholder="开始写下你的想法…">${escapeHtml(n.content)}</textarea>
       </div>
+    </div>
+    <div class="mobile-save-bar">
+      <button class="btn primary save-trigger" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存笔记'}</button>
     </div>`;
   }
 
@@ -837,7 +963,7 @@
           <div class="editor-actions">
             ${!isNew ? `<button class="btn" id="pdfReflectBtn" type="button" ${state.exporting?'disabled':''}>${ICONS.pdf} ${state.exporting?'导出中…':'导出 PDF'}</button>
             <button class="btn" id="deleteReflectBtn" type="button">${ICONS.trash} 删除</button>` : ""}
-            <button class="btn primary" id="saveReflectBtn" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存'}</button>
+            <button class="btn primary save-trigger desktop-save-btn" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存'}</button>
           </div>
         </div>
 
@@ -869,6 +995,9 @@
           <textarea id="reflectTomorrow" placeholder="想对明天说点什么？想改进、想尝试、想提醒自己的事。">${escapeHtml(r.tomorrow)}</textarea>
         </div>
       </div>
+    </div>
+    <div class="mobile-save-bar">
+      <button class="btn primary save-trigger" type="button" ${state.saving?'disabled':''}>${state.saving?'保存中…':'保存反思'}</button>
     </div>`;
   }
 
@@ -920,17 +1049,16 @@
     const backBtn = document.getElementById("backBtn");
     if(backBtn) backBtn.addEventListener("click", ()=>{ state.editing = null; render(); });
 
-    const saveNoteBtn = document.getElementById("saveNoteBtn");
-    if(saveNoteBtn) saveNoteBtn.addEventListener("click", saveNoteFromEditor);
+    if(state.editing){
+      const saveHandler = state.editing.type === 'note' ? saveNoteFromEditor : saveReflectFromEditor;
+      document.querySelectorAll(".save-trigger").forEach(btn=> btn.addEventListener("click", saveHandler));
+    }
 
     const deleteNoteBtn = document.getElementById("deleteNoteBtn");
     if(deleteNoteBtn) deleteNoteBtn.addEventListener("click", ()=> confirmDelete('note', state.editing.id));
 
     const pdfNoteBtn = document.getElementById("pdfNoteBtn");
     if(pdfNoteBtn) pdfNoteBtn.addEventListener("click", ()=> exportNotePdf(getNote(state.editing.id)));
-
-    const saveReflectBtn = document.getElementById("saveReflectBtn");
-    if(saveReflectBtn) saveReflectBtn.addEventListener("click", saveReflectFromEditor);
 
     const deleteReflectBtn = document.getElementById("deleteReflectBtn");
     if(deleteReflectBtn) deleteReflectBtn.addEventListener("click", ()=> confirmDelete('reflect', state.editing.id));
