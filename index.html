@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>笔记本 · 思考与反思</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -30,26 +30,18 @@
     font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
+    overscroll-behavior-y:none;
   }
 
-  /* faint paper texture via repeating lines */
   .app{
     display:flex;
+    flex-direction:column;
     min-height:100vh;
-    background-image:
-      linear-gradient(var(--paper) 0%, var(--paper) 100%);
   }
 
-  /* ---------- sidebar ---------- */
-  .sidebar{
-    width:220px;
-    flex:0 0 220px;
-    border-right:1px solid var(--rule);
-    padding:28px 18px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-  }
+  /* ---------- sidebar (desktop only, hidden by default — mobile first) ---------- */
+  .sidebar{ display:none; }
+
   .brand{
     font-family:var(--font-display);
     font-size:20px;
@@ -105,11 +97,74 @@
   }
   .sidebar-footer button:hover{ color:var(--accent-deep); }
 
+  /* ---------- mobile top bar ---------- */
+  .mobile-topbar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:calc(env(safe-area-inset-top, 0px) + 14px) 18px 12px;
+    background:var(--paper);
+    border-bottom:1px solid var(--rule);
+  }
+  .mobile-topbar .brand{ margin:0; font-size:18px; }
+
+  /* ---------- bottom tab bar (mobile) ---------- */
+  .bottom-nav{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:30;
+    display:flex;
+    background:var(--paper);
+    border-top:1px solid var(--rule);
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-nav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    padding:9px 4px 8px;
+    color:var(--ink-faint);
+    cursor:pointer;
+    user-select:none;
+    min-height:56px;
+  }
+  .bottom-nav-item svg{ width:21px; height:21px; }
+  .bottom-nav-item span.label{ font-size:11px; font-weight:500; }
+  .bottom-nav-item.active{ color:var(--accent-deep); }
+
+  /* ---------- floating action button (mobile) ---------- */
+  .fab{
+    position:fixed;
+    right:18px;
+    bottom:calc(72px + env(safe-area-inset-bottom, 0px));
+    z-index:31;
+    width:56px; height:56px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 8px 20px rgba(194,98,45,0.4);
+    cursor:pointer;
+  }
+  .fab svg{ width:24px; height:24px; }
+  .fab:active{ background:var(--accent-deep); transform:scale(0.96); }
+
   /* ---------- main ---------- */
   .main{
     flex:1;
     min-width:0;
-    padding:36px 48px 60px;
+    width:100%;
+    padding:20px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+    margin:0 auto;
     max-width:880px;
   }
 
@@ -121,19 +176,19 @@
   }
   .view-title{
     font-family:var(--font-display);
-    font-size:28px;
+    font-size:24px;
     margin:0;
   }
   .view-sub{
     color:var(--ink-faint);
     font-size:13px;
-    margin:4px 0 26px;
+    margin:4px 0 18px;
   }
 
   .toolbar{
     display:flex;
     gap:10px;
-    margin-bottom:22px;
+    margin-bottom:16px;
     flex-wrap:wrap;
     align-items:center;
   }
@@ -144,28 +199,28 @@
   }
   .search-box input{
     width:100%;
-    padding:9px 12px 9px 32px;
+    padding:11px 12px 11px 36px;
     border:1px solid var(--rule);
-    border-radius:7px;
+    border-radius:9px;
     background:#fff;
-    font-size:13.5px;
+    font-size:16px;
     color:var(--ink);
     outline:none;
     font-family:var(--font-body);
   }
   .search-box input:focus{ border-color:var(--accent); }
   .search-box svg{
-    position:absolute; left:10px; top:50%; transform:translateY(-50%);
-    width:14px; height:14px; color:var(--ink-faint);
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; color:var(--ink-faint);
   }
 
   button.btn{
     border:1px solid var(--rule);
     background:#fff;
     color:var(--ink-soft);
-    padding:9px 14px;
-    border-radius:7px;
-    font-size:13.5px;
+    padding:10px 16px;
+    border-radius:9px;
+    font-size:14px;
     cursor:pointer;
     font-family:var(--font-body);
     display:inline-flex;
@@ -173,6 +228,7 @@
     gap:6px;
     transition:border-color .15s, color .15s, background .15s;
     white-space:nowrap;
+    min-height:40px;
   }
   button.btn:hover{ border-color:var(--ink-faint); color:var(--ink); }
   button.btn.primary{
@@ -182,20 +238,27 @@
     font-weight:600;
   }
   button.btn.primary:hover{ background:var(--accent-deep); border-color:var(--accent-deep); }
-  button.btn svg{ width:14px; height:14px; }
+  button.btn svg{ width:14px; height:14px; flex:none; }
   button.btn:disabled{ opacity:.45; cursor:default; }
+  /* the toolbar "new" button is hidden on mobile — the FAB covers that action */
+  .toolbar-new-btn{ display:none; }
 
   .tag-filter{
-    display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;
+    display:flex; gap:6px; flex-wrap:nowrap; margin-bottom:16px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:2px;
   }
   .tag-chip{
-    padding:4px 10px;
+    padding:6px 12px;
     border-radius:20px;
     background:var(--paper-soft);
     color:var(--ink-soft);
-    font-size:12px;
+    font-size:12.5px;
     cursor:pointer;
     border:1px solid transparent;
+    white-space:nowrap;
+    flex:none;
   }
   .tag-chip.active{
     background:var(--accent-soft);
@@ -225,8 +288,8 @@
   .note-card{
     background:#fff;
     border:1px solid var(--rule);
-    border-radius:10px;
-    padding:16px 18px;
+    border-radius:12px;
+    padding:15px 16px;
     cursor:pointer;
     transition:border-color .15s, box-shadow .15s;
     position:relative;
@@ -235,6 +298,7 @@
     border-color:var(--ink-faint);
     box-shadow:0 2px 10px rgba(43,40,38,0.05);
   }
+  .note-card:active{ background:var(--paper-soft); }
   .note-card-top{
     display:flex; justify-content:space-between; align-items:baseline; gap:10px;
   }
@@ -253,7 +317,7 @@
   }
   .note-card-preview{
     color:var(--ink-soft);
-    font-size:13.5px;
+    font-size:14px;
     line-height:1.6;
     margin:8px 0 10px;
     overflow:hidden;
@@ -274,8 +338,8 @@
   .reflect-card{
     background:#fff;
     border:1px solid var(--rule);
-    border-radius:10px;
-    padding:16px 18px 16px 22px;
+    border-radius:12px;
+    padding:15px 16px 15px 19px;
     cursor:pointer;
     position:relative;
     transition:border-color .15s, box-shadow .15s;
@@ -286,6 +350,7 @@
     border-left-color:var(--accent);
     box-shadow:0 2px 10px rgba(43,40,38,0.05);
   }
+  .reflect-card:active{ background:var(--paper-soft); }
   .reflect-card-top{ display:flex; justify-content:space-between; align-items:baseline; }
   .reflect-date{
     font-family:var(--font-display);
@@ -301,25 +366,39 @@
     overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
   }
 
-  /* ---------- editor ---------- */
+  /* ---------- editor (mobile-first: edge-to-edge, sticky header) ---------- */
   .editor{
     background:#fff;
-    border:1px solid var(--rule);
-    border-radius:12px;
-    padding:28px 32px;
+    border:none;
+    border-radius:0;
+    padding:0;
+    margin:-20px -16px 0;
+    min-height:calc(100vh - 0px);
   }
   .editor-header{
-    display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px;
+    position:sticky; top:0; z-index:15;
+    background:#fff;
+    border-bottom:1px solid var(--rule);
+    gap:8px;
   }
+  .editor-body{ padding:18px 16px calc(40px + env(safe-area-inset-bottom,0px)); }
   .editor-back{
     color:var(--ink-faint);
-    font-size:13px;
+    font-size:14px;
     cursor:pointer;
-    display:flex; align-items:center; gap:5px;
-    background:none; border:none; padding:0; font-family:var(--font-body);
+    display:flex; align-items:center; gap:4px;
+    background:none; border:none; padding:6px 4px 6px 0; font-family:var(--font-body);
+    flex:none;
   }
+  .editor-back svg{ width:18px; height:18px; }
+  .editor-back .back-label{ display:none; }
   .editor-back:hover{ color:var(--ink); }
-  .editor-actions{ display:flex; gap:8px; }
+  .editor-actions{ display:flex; gap:6px; align-items:center; }
+  .editor-actions button.btn{ padding:9px 12px; }
+  .editor-actions button.btn .btn-label{ display:none; }
+  .editor-actions button.btn.primary .btn-label{ display:inline; }
 
   .field-label{
     font-size:11.5px;
@@ -333,7 +412,7 @@
     width:100%;
     border:none;
     font-family:var(--font-display);
-    font-size:24px;
+    font-size:22px;
     font-weight:600;
     color:var(--ink);
     outline:none;
@@ -344,27 +423,28 @@
   input.title-input::placeholder{ color:var(--ink-faint); font-weight:400; }
 
   .meta-row{
-    display:flex; gap:16px; align-items:center; margin-bottom:18px;
+    display:flex; gap:10px; align-items:center; margin-bottom:16px;
     font-size:12px; color:var(--ink-faint); flex-wrap:wrap;
   }
   input.tags-input{
     border:1px solid var(--rule);
-    border-radius:6px;
-    padding:6px 10px;
-    font-size:12.5px;
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:16px;
     outline:none;
     font-family:var(--font-body);
-    min-width:200px;
+    flex:1;
+    min-width:160px;
   }
   input.tags-input:focus{ border-color:var(--accent); }
 
   textarea.content-input{
     width:100%;
-    min-height:300px;
+    min-height:260px;
     border:none;
     outline:none;
     resize:vertical;
-    font-size:15px;
+    font-size:16px;
     line-height:1.85;
     font-family:var(--font-body);
     color:var(--ink);
@@ -373,10 +453,10 @@
   }
   textarea.content-input::placeholder{ color:var(--ink-faint); }
 
-  hr.soft{ border:none; border-top:1px solid var(--rule); margin:18px 0; }
+  hr.soft{ border:none; border-top:1px solid var(--rule); margin:16px 0; }
 
   /* reflection prompt blocks */
-  .prompt-block{ margin-bottom:22px; }
+  .prompt-block{ margin-bottom:20px; }
   .prompt-block label{
     display:block;
     font-family:var(--font-display);
@@ -388,26 +468,26 @@
   .prompt-block textarea{
     width:100%;
     border:1px solid var(--rule);
-    border-radius:8px;
+    border-radius:10px;
     padding:12px 14px;
-    font-size:14px;
+    font-size:16px;
     line-height:1.7;
     font-family:var(--font-body);
     color:var(--ink);
     outline:none;
     resize:vertical;
-    min-height:70px;
+    min-height:80px;
     background:var(--paper);
   }
   .prompt-block textarea:focus{ border-color:var(--accent); background:#fff; }
 
-  .mood-row{ display:flex; gap:8px; margin-bottom:22px; }
+  .mood-row{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
   .mood-option{
-    width:42px; height:42px;
+    width:46px; height:46px;
     border-radius:50%;
     border:2px solid var(--rule);
     background:#fff;
-    font-size:19px;
+    font-size:20px;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     transition:border-color .15s, transform .1s;
@@ -415,13 +495,13 @@
   .mood-option:hover{ transform:translateY(-2px); }
   .mood-option.selected{ border-color:var(--accent); background:var(--accent-soft); }
 
-  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
   input.date-input{
     border:1px solid var(--rule);
-    border-radius:6px;
-    padding:7px 10px;
+    border-radius:8px;
+    padding:9px 10px;
     font-family:var(--font-mono);
-    font-size:13px;
+    font-size:15px;
     outline:none;
   }
   input.date-input:focus{ border-color:var(--accent); }
@@ -447,14 +527,24 @@
     position:fixed; inset:0; background:rgba(43,40,38,0.4);
     display:flex; align-items:center; justify-content:center;
     z-index:100;
+    padding:20px;
   }
   .modal-box{
-    background:#fff; border-radius:12px; padding:24px 26px;
-    width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    background:#fff; border-radius:14px; padding:22px 22px;
+    width:100%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
   }
   .modal-box h3{ margin:0 0 8px; font-family:var(--font-display); font-size:17px; }
   .modal-box p{ margin:0 0 18px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; }
-  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+  .modal-choice-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+  .modal-choice{
+    display:flex; align-items:center; gap:10px;
+    border:1px solid var(--rule); border-radius:10px;
+    padding:13px 14px; cursor:pointer; font-size:14.5px; color:var(--ink);
+    background:#fff; text-align:left; width:100%; font-family:var(--font-body);
+  }
+  .modal-choice:active{ background:var(--paper-soft); }
+  .modal-choice svg{ width:18px; height:18px; color:var(--accent-deep); flex:none; }
 
   .loading-overlay{
     position:fixed; inset:0; background:rgba(250,247,240,0.85);
@@ -463,15 +553,53 @@
   }
   .hidden{ display:none !important; }
 
-  @media (max-width: 720px){
-    .app{ flex-direction:column; }
-    .sidebar{ width:100%; flex:none; border-right:none; border-bottom:1px solid var(--rule); flex-direction:row; align-items:center; padding:16px 14px; overflow-x:auto; }
-    .brand{ margin:0 12px 0 0; }
-    .sidebar-divider{ display:none; }
-    .sidebar-footer{ display:none; }
-    .nav-item{ white-space:nowrap; }
-    .main{ padding:24px 18px 60px; max-width:100%; }
-    .editor{ padding:20px; }
+  /* ================= DESKTOP ENHANCEMENT (mobile-first base above) ================= */
+  @media (min-width: 860px){
+    .app{ flex-direction:row; min-height:100vh; }
+
+    .sidebar{
+      display:flex;
+      width:220px;
+      flex:0 0 220px;
+      border-right:1px solid var(--rule);
+      padding:28px 18px;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .mobile-topbar{ display:none; }
+    .bottom-nav{ display:none; }
+    .fab{ display:none; }
+    .toolbar-new-btn{ display:inline-flex; }
+
+    .main{
+      padding:36px 48px 60px;
+      max-width:880px;
+      margin:0;
+    }
+
+    .view-title{ font-size:28px; }
+    .view-sub{ margin:4px 0 26px; }
+    .toolbar{ margin-bottom:22px; }
+
+    .editor{
+      border:1px solid var(--rule);
+      border-radius:12px;
+      padding:28px 32px;
+      margin:0;
+      min-height:0;
+    }
+    .editor-header{
+      position:static;
+      padding:0 0 18px;
+      margin-bottom:0;
+      border-bottom:none;
+    }
+    .editor-body{ padding:0; }
+    .editor-back .back-label{ display:inline; }
+    .editor-actions button.btn .btn-label{ display:inline; }
+    input.title-input{ font-size:24px; }
+    .meta-row{ margin-bottom:18px; }
   }
 
   :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
@@ -577,29 +705,65 @@
   /* ============ render root ============ */
   function render(){
     const app = document.getElementById("app");
-    app.innerHTML = sidebarHtml() + mainHtml();
+    const showChrome = !state.editing;
+    app.innerHTML =
+      sidebarHtml() +
+      (showChrome ? mobileTopbarHtml() : "") +
+      mainHtml() +
+      (showChrome ? bottomNavHtml() + fabHtml() : "");
     bindEvents();
   }
 
-  function sidebarHtml(){
+  function navMeta(){
     const noteCount = state.notes.length;
     const reflectCount = state.reflections.length;
     const allCount = noteCount + reflectCount;
-    function item(key, icon, label, count){
-      const active = state.view === key && !state.editing;
-      return `<div class="nav-item ${active?'active':''}" data-nav="${key}">
-        <span style="width:15px;height:15px;display:inline-flex">${icon}</span>
-        <span>${label}</span>
-        <span class="count">${count}</span>
+    return [
+      {key:'notes', icon:ICONS.notes, label:'笔记', count:noteCount},
+      {key:'reflect', icon:ICONS.reflect, label:'反思', count:reflectCount},
+      {key:'all', icon:ICONS.all, label:'全部', count:allCount}
+    ];
+  }
+
+  function mobileTopbarHtml(){
+    return `<div class="mobile-topbar">
+      <div class="brand">笔记本<span class="dot">·</span></div>
+    </div>`;
+  }
+
+  function bottomNavHtml(){
+    return `<div class="bottom-nav">
+      ${navMeta().map(it=>{
+        const active = state.view === it.key;
+        return `<div class="bottom-nav-item ${active?'active':''}" data-nav="${it.key}">
+          ${it.icon}
+          <span class="label">${it.label}</span>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+
+  function fabHtml(){
+    return `<button class="fab" id="fabBtn" type="button" aria-label="新建">${ICONS.plus}</button>`;
+  }
+
+  function sidebarHtml(){
+    const counts = navMeta();
+    function item(it){
+      const active = state.view === it.key && !state.editing;
+      return `<div class="nav-item ${active?'active':''}" data-nav="${it.key}">
+        <span style="width:15px;height:15px;display:inline-flex">${it.icon}</span>
+        <span>${it.key==='notes'?'笔记':it.key==='reflect'?'每日反思':'全部归档'}</span>
+        <span class="count">${it.count}</span>
       </div>`;
     }
     return `
     <div class="sidebar">
       <div class="brand">笔记本<span class="dot">·</span></div>
-      ${item('notes', ICONS.notes, '笔记', noteCount)}
-      ${item('reflect', ICONS.reflect, '每日反思', reflectCount)}
+      ${item(counts[0])}
+      ${item(counts[1])}
       <div class="sidebar-divider"></div>
-      ${item('all', ICONS.all, '全部归档', allCount)}
+      ${item(counts[2])}
       <div class="sidebar-footer">
         数据保存在本设备账户下。<br/>
         <button id="exportAllBtn" type="button">导出全部为 PDF</button>
@@ -645,7 +809,7 @@
           ${ICONS.search}
           <input id="searchInput" type="text" placeholder="搜索笔记…" value="${escapeHtml(state.search)}"/>
         </div>
-        <button class="btn primary" id="newNoteBtn" type="button">${ICONS.plus} 新建笔记</button>
+        <button class="btn primary toolbar-new-btn" id="newNoteBtn" type="button">${ICONS.plus} 新建笔记</button>
       </div>
       ${tags.length ? `<div class="tag-filter">
         <span class="tag-chip ${!state.activeTag?'active':''}" data-tag="">全部</span>
@@ -697,7 +861,7 @@
           ${ICONS.search}
           <input id="searchInput" type="text" placeholder="搜索反思…" value="${escapeHtml(state.search)}"/>
         </div>
-        <button class="btn primary" id="newReflectBtn" type="button">${ICONS.plus} 写今天的反思</button>
+        <button class="btn primary toolbar-new-btn" id="newReflectBtn" type="button">${ICONS.plus} 写今天的反思</button>
       </div>
       ${list.length ? `<div class="card-list">${list.map(reflectCardHtml).join("")}</div>` : emptyReflectHtml()}
     </div>`;
@@ -769,23 +933,25 @@
     const isNew = !state.editing.id;
     const n = isNew ? {id:null,title:"",content:"",tags:[]} : getNote(state.editing.id);
     return `
-    <div class="main">
+    <div class="main" style="padding-bottom:0">
       <div class="editor">
         <div class="editor-header">
-          <button class="editor-back" id="backBtn" type="button">${ICONS.back} 返回笔记</button>
+          <button class="editor-back" id="backBtn" type="button">${ICONS.back}<span class="back-label">返回笔记</span></button>
           <div class="editor-actions">
-            ${!isNew ? `<button class="btn" id="pdfNoteBtn" type="button">${ICONS.pdf} 导出 PDF</button>
-            <button class="btn" id="deleteNoteBtn" type="button">${ICONS.trash} 删除</button>` : ""}
-            <button class="btn primary" id="saveNoteBtn" type="button">保存</button>
+            ${!isNew ? `<button class="btn" id="pdfNoteBtn" type="button" aria-label="导出 PDF">${ICONS.pdf}<span class="btn-label">导出 PDF</span></button>
+            <button class="btn" id="deleteNoteBtn" type="button" aria-label="删除">${ICONS.trash}<span class="btn-label">删除</span></button>` : ""}
+            <button class="btn primary" id="saveNoteBtn" type="button"><span class="btn-label">保存</span></button>
           </div>
         </div>
-        <input class="title-input" id="noteTitleInput" type="text" placeholder="标题…" value="${escapeHtml(n.title)}"/>
-        <div class="meta-row">
-          <span>标签</span>
-          <input class="tags-input" id="noteTagsInput" type="text" placeholder="用逗号分隔，例如：工作, 灵感" value="${escapeHtml((n.tags||[]).join(', '))}"/>
+        <div class="editor-body">
+          <input class="title-input" id="noteTitleInput" type="text" placeholder="标题…" value="${escapeHtml(n.title)}"/>
+          <div class="meta-row">
+            <span>标签</span>
+            <input class="tags-input" id="noteTagsInput" type="text" placeholder="用逗号分隔，例如：工作, 灵感" value="${escapeHtml((n.tags||[]).join(', '))}"/>
+          </div>
+          <hr class="soft"/>
+          <textarea class="content-input" id="noteContentInput" placeholder="开始写下你的想法…">${escapeHtml(n.content)}</textarea>
         </div>
-        <hr class="soft"/>
-        <textarea class="content-input" id="noteContentInput" placeholder="开始写下你的想法…">${escapeHtml(n.content)}</textarea>
       </div>
     </div>`;
   }
@@ -794,43 +960,45 @@
     const isNew = !state.editing.id;
     const r = isNew ? {id:null,date:todayStr(),mood:"",highlight:"",challenge:"",grateful:"",tomorrow:""} : getReflection(state.editing.id);
     return `
-    <div class="main">
+    <div class="main" style="padding-bottom:0">
       <div class="editor">
         <div class="editor-header">
-          <button class="editor-back" id="backBtn" type="button">${ICONS.back} 返回反思</button>
+          <button class="editor-back" id="backBtn" type="button">${ICONS.back}<span class="back-label">返回反思</span></button>
           <div class="editor-actions">
-            ${!isNew ? `<button class="btn" id="pdfReflectBtn" type="button">${ICONS.pdf} 导出 PDF</button>
-            <button class="btn" id="deleteReflectBtn" type="button">${ICONS.trash} 删除</button>` : ""}
-            <button class="btn primary" id="saveReflectBtn" type="button">保存</button>
+            ${!isNew ? `<button class="btn" id="pdfReflectBtn" type="button" aria-label="导出 PDF">${ICONS.pdf}<span class="btn-label">导出 PDF</span></button>
+            <button class="btn" id="deleteReflectBtn" type="button" aria-label="删除">${ICONS.trash}<span class="btn-label">删除</span></button>` : ""}
+            <button class="btn primary" id="saveReflectBtn" type="button"><span class="btn-label">保存</span></button>
           </div>
         </div>
 
-        <div class="date-picker-row">
-          <span class="field-label" style="margin:0">日期</span>
-          <input class="date-input" id="reflectDateInput" type="date" value="${r.date}"/>
-          <span style="color:var(--ink-faint);font-size:12.5px">${weekdayOf(r.date)}</span>
-        </div>
+        <div class="editor-body">
+          <div class="date-picker-row">
+            <span class="field-label" style="margin:0">日期</span>
+            <input class="date-input" id="reflectDateInput" type="date" value="${r.date}"/>
+            <span style="color:var(--ink-faint);font-size:12.5px">${weekdayOf(r.date)}</span>
+          </div>
 
-        <p class="field-label">今天的心情</p>
-        <div class="mood-row" id="moodRow">
-          ${MOODS.map(m=>`<div class="mood-option ${r.mood===m?'selected':''}" data-mood="${m}">${m}</div>`).join("")}
-        </div>
+          <p class="field-label">今天的心情</p>
+          <div class="mood-row" id="moodRow">
+            ${MOODS.map(m=>`<div class="mood-option ${r.mood===m?'selected':''}" data-mood="${m}">${m}</div>`).join("")}
+          </div>
 
-        <div class="prompt-block">
-          <label>今天最值得记下的事</label>
-          <textarea id="reflectHighlight" placeholder="发生了什么让你印象深刻、开心或者有成就感的事？">${escapeHtml(r.highlight)}</textarea>
-        </div>
-        <div class="prompt-block">
-          <label>遇到的困难或挑战</label>
-          <textarea id="reflectChallenge" placeholder="哪里不太顺利？是什么原因？">${escapeHtml(r.challenge)}</textarea>
-        </div>
-        <div class="prompt-block">
-          <label>心怀感激的事</label>
-          <textarea id="reflectGrateful" placeholder="今天有什么值得感恩、值得珍惜的小事？">${escapeHtml(r.grateful)}</textarea>
-        </div>
-        <div class="prompt-block">
-          <label>给明天的自己一句话</label>
-          <textarea id="reflectTomorrow" placeholder="想对明天说点什么？想改进、想尝试、想提醒自己的事。">${escapeHtml(r.tomorrow)}</textarea>
+          <div class="prompt-block">
+            <label>今天最值得记下的事</label>
+            <textarea id="reflectHighlight" placeholder="发生了什么让你印象深刻、开心或者有成就感的事？">${escapeHtml(r.highlight)}</textarea>
+          </div>
+          <div class="prompt-block">
+            <label>遇到的困难或挑战</label>
+            <textarea id="reflectChallenge" placeholder="哪里不太顺利？是什么原因？">${escapeHtml(r.challenge)}</textarea>
+          </div>
+          <div class="prompt-block">
+            <label>心怀感激的事</label>
+            <textarea id="reflectGrateful" placeholder="今天有什么值得感恩、值得珍惜的小事？">${escapeHtml(r.grateful)}</textarea>
+          </div>
+          <div class="prompt-block">
+            <label>给明天的自己一句话</label>
+            <textarea id="reflectTomorrow" placeholder="想对明天说点什么？想改进、想尝试、想提醒自己的事。">${escapeHtml(r.tomorrow)}</textarea>
+          </div>
         </div>
       </div>
     </div>`;
@@ -868,11 +1036,10 @@
     if(newNoteBtn) newNoteBtn.addEventListener("click", ()=>{ state.editing = {type:'note', id:null}; render(); });
 
     const newReflectBtn = document.getElementById("newReflectBtn");
-    if(newReflectBtn) newReflectBtn.addEventListener("click", ()=>{
-      const existing = state.reflections.find(r=>r.date===todayStr());
-      state.editing = {type:'reflect', id: existing ? existing.id : null};
-      render();
-    });
+    if(newReflectBtn) newReflectBtn.addEventListener("click", openTodayReflect);
+
+    const fabBtn = document.getElementById("fabBtn");
+    if(fabBtn) fabBtn.addEventListener("click", handleFabClick);
 
     document.querySelectorAll("[data-open-note]").forEach(el=>{
       el.addEventListener("click", ()=>{ state.editing = {type:'note', id: el.getAttribute("data-open-note")}; render(); });
@@ -981,6 +1148,49 @@
     state.view = "reflect";
     render();
     showToast("已保存");
+  }
+
+  function openTodayReflect(){
+    const existing = state.reflections.find(r=>r.date===todayStr());
+    state.editing = {type:'reflect', id: existing ? existing.id : null};
+    render();
+  }
+
+  function handleFabClick(){
+    if(state.view === "notes"){
+      state.editing = {type:'note', id:null};
+      render();
+      return;
+    }
+    if(state.view === "reflect"){
+      openTodayReflect();
+      return;
+    }
+    // "all" view: ask which kind of entry to create
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `<div class="modal-box">
+      <h3>新建</h3>
+      <p>想写点什么？</p>
+      <div class="modal-choice-list">
+        <button class="modal-choice" id="chooseNote" type="button">${ICONS.notes} 新建笔记</button>
+        <button class="modal-choice" id="chooseReflect" type="button">${ICONS.reflect} 写今天的反思</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="cancelChoice" type="button">取消</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#cancelChoice").addEventListener("click", ()=> overlay.remove());
+    overlay.querySelector("#chooseNote").addEventListener("click", ()=>{
+      overlay.remove();
+      state.editing = {type:'note', id:null};
+      render();
+    });
+    overlay.querySelector("#chooseReflect").addEventListener("click", ()=>{
+      overlay.remove();
+      openTodayReflect();
+    });
   }
 
   function confirmDelete(type, id){
